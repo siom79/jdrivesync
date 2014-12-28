@@ -1,19 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>jdrivesync</artifactId>
-	<groupId>jdrivesync</groupId>
-	<version>0.0.2-SNAPSHOT</version>
+    <groupId>jdrivesync</groupId>
+    <version>0.2.0-SNAPSHOT</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.http.version>1.19.0</project.http.version>
         <project.oauth.version>1.19.0</project.oauth.version>
         <project.google-drive-service.version>v2-rev145-1.19.0</project.google-drive-service.version>
+        <github.account>siom79</github.account>
+        <github.project>jdrivesync</github.project>
     </properties>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>martin.mois</id>
+            <name>Martin Mois</name>
+            <email>martin.mois@gmail.com</email>
+        </developer>
+    </developers>
 
     <dependencies>
         <dependency>
@@ -90,6 +107,13 @@
             </plugin>
         </plugins>
     </build>
+
+    <scm>
+        <connection>scm:git:git@github.com:${github.account}/${github.project}.git</connection>
+        <developerConnection>scm:git:git@github.com:${github.account}/${github.project}.git</developerConnection>
+        <url>git@github.com:${github.account}/${github.project}.git</url>
+        <tag>HEAD</tag>
+    </scm>
 
     <profiles>
         <profile>
