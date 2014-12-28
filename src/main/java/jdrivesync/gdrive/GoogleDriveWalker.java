@@ -1,0 +1,128 @@
+package jdrivesync.gdrive;
+
+import com.google.api.services.drive.model.File;
+import jdrivesync.cli.Options;
+import jdrivesync.exception.JDriveSyncException;
+import jdrivesync.model.SyncDirectory;
+import jdrivesync.model.SyncFile;
+import jdrivesync.model.SyncItem;
+import jdrivesync.walker.Walker;
+import jdrivesync.walker.WalkerVisitor;
+
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+public class GoogleDriveWalker implements Walker {
+    private static final Logger LOGGER = Logger.getLogger(GoogleDriveWalker.class.getName());
+    private final Options options;
+    private final GoogleDriveAdapter googleDriveAdapter;
+
+    public GoogleDriveWalker(Options options, GoogleDriveAdapter googleDriveAdapter) {
+        this.options = options;
+        this.googleDriveAdapter = googleDriveAdapter;
+    }
+
+    @Override
+    public void walk(WalkerVisitor fileSystemVisitor) {
+        File remoteRootFile = googleDriveAdapter.getFile("root");
+        remoteRootFile = getRemoteRootDir(remoteRootFile);
+        java.io.File localRootFile = options.getLocalRootDir().get();
+        SyncDirectory rootDirectory = new SyncDirectory(Optional.of(localRootFile), Optional.of(remoteRootFile), "/", Optional.empty());
+        walkInternal(rootDirectory, googleDriveAdapter, fileSystemVisitor);
+    }
+
+    private File getRemoteRootDir(File remoteRootFile) {
+        File currentRemoteDir = remoteRootFile;
+        if (options.getRemoteRootDir().isPresent()) {
+            String remoteRootDir = options.getRemoteRootDir().get();
+            String[] pathParts = remoteRootDir.split("/");
+            for (String pathPart : pathParts) {
+                if (pathPart.length() == 0) {
+                    continue;
+                }
+                File foundRemoteDir = null;
+                List<File> remoteChildren = googleDriveAdapter.listChildren(currentRemoteDir.getId());
+                for (File remoteChild : remoteChildren) {
+                    if (remoteChild.getTitle().equals(pathPart)) {
+                        if (googleDriveAdapter.isDirectory(remoteChild)) {
+                            foundRemoteDir = remoteChild;
+                        } else {
+                            throw new JDriveSyncException(JDriveSyncException.Reason.InvalidRemoteRootDirectory, "The remote root directory path '" + remoteRootDir + "' contains a file: '" + pathPart + "'.");
+                        }
+                    }
+                }
+                if (foundRemoteDir == null) {
+                    throw new JDriveSyncException(JDriveSyncException.Reason.InvalidRemoteRootDirectory, "The remote path '" + remoteRootDir + "' does not exist.");
+                } else {
+                    currentRemoteDir = foundRemoteDir;
+                }
+            }
+        }
+        return currentRemoteDir;
+    }
+
+    private void walkInternal(SyncDirectory syncDirectory, GoogleDriveAdapter googleDriveAdapter, WalkerVisitor visitor) {
+        if (syncDirectory.getRemoteFile().isPresent()) {
+            File remoteFile = syncDirectory.getRemoteFile().get();
+            List<File> remoteChildren = googleDriveAdapter.listChildren(remoteFile.getId());
+            for (File file : remoteChildren) {
+                String relativePath = toRelativePath(file, syncDirectory);
+                if (googleDriveAdapter.isDirectory(file)) {
+                    if (!fileShouldBeIgnored(relativePath, true, file)) {
+                        SyncDirectory subSyncDirectory = new SyncDirectory(Optional.empty(), Optional.of(file), relativePath, Optional.of(syncDirectory));
+                        syncDirectory.addChild(subSyncDirectory);
+                    }
+                } else {
+                    if (!fileShouldBeIgnored(relativePath, false, file)) {
+                        SyncFile syncFile = new SyncFile(Optional.empty(), Optional.of(file), relativePath, Optional.of(syncDirectory));
+                        syncDirectory.addChild(syncFile);
+                    }
+                }
+            }
+            WalkerVisitor.WalkerVisitorResult result = visitor.visitDirectory(syncDirectory);
+            if (result == WalkerVisitor.WalkerVisitorResult.Continue) {
+                Iterator<SyncItem> childrenIterator = syncDirectory.getChildrenIterator();
+                while (childrenIterator.hasNext()) {
+                    SyncItem syncItem = childrenIterator.next();
+                    if (syncItem instanceof SyncDirectory) {
+                        SyncDirectory subSyncDir = (SyncDirectory) syncItem;
+                        walkInternal(subSyncDir, googleDriveAdapter, visitor);
+                    }
+                    childrenIterator.remove(); //free memory
+                }
+            }
+        } else {
+            LOGGER.log(Level.FINE, "Skipping directory '" + syncDirectory.getPath() + "' because remote file is not set.");
+        }
+    }
+
+    private String toRelativePath(File file, SyncDirectory syncDirectory) {
+        if (syncDirectory.isRootDirectory()) {
+            return "/" + file.getTitle();
+        } else {
+            String parentPath = syncDirectory.getPath();
+            return parentPath + "/" + file.getTitle();
+        }
+    }
+
+    private boolean fileShouldBeIgnored(String name, boolean isDirectory, File file) {
+        boolean matches = options.getIgnoreFiles().matches(name, isDirectory);
+        if (matches && LOGGER.isLoggable(Level.FINE)) {
+            LOGGER.log(Level.FINE, "Ignoring file '" + name + "' because the name matches the ignore list.");
+        }
+        if (!matches && options.getMaxFileSize().isPresent()) {
+            if (!googleDriveAdapter.isDirectory(file)) {
+                Long fileSize = file.getFileSize();
+                Long maxFileSize = options.getMaxFileSize().get();
+                if (maxFileSize.compareTo(fileSize) < 0) {
+                    matches = true;
+                    LOGGER.log(Level.FINE, "Ignoring '" + name + "' because file is bigger than maxFileSize (file: " + fileSize + ", maxFileSize: " + maxFileSize + ").");
+                }
+            }
+        }
+        return matches;
+    }
+}

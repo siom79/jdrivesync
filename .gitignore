@@ -1,0 +1,9 @@
+*.class
+*.iml
+.idea
+.project
+.classpath
+target
+*.log*
+.jdrivesync
+*.html
