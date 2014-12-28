@@ -2,6 +2,7 @@ package jdrivesync.encryption;
 
 import jdrivesync.cli.Options;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -10,6 +11,7 @@ import java.io.InputStream;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
+@Ignore
 public class EncryptionTest {
 	private Options options;
 	private Encryption encryption;
