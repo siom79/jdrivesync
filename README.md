@@ -134,13 +134,11 @@ The patterns should follow these rules:
 * If the line starts with # it is treated as comment. If the first character should be #, use \#.
 * All patterns are seen relative from the root of your local directory (example: doc/git.html).
 * Use / as path separator (and not the backslash).
-* Use * as wildcard for a file name. The pattern doc/*.html ignores all files ending with .html inside doc.
-* If the pattern starts with **/ (e.g. **/foo) it will match all files or folders named foo inside the file hierarchy.
-* If the pattern ends with /** (e.g. foo/**) it will match all files and folders below the directory foo.
-* If the pattern contains /**/ (e.g. foo/**/xy) it will expand to zero or more directories that are in between foo and xy.
+* Use \* as wildcard for a file name. The pattern doc/*.html ignores all files ending with .html inside doc.
+* If the pattern starts with \*\*/ (e.g. \*\*/foo) it will match all files or folders named foo inside the file hierarchy.
+* If the pattern ends with /\*\* (e.g. foo/\*\*) it will match all files and folders below the directory foo.
+* If the pattern contains /\*\*/ (e.g. foo/\*\*/xy) it will expand to zero or more directories that are in between foo and xy.
 
 ##Downloads##
 The following releases are available:
-* [Version 0.2.0](https://github.com/siom79/japicmp/releases/tag/japicmp-base-0.2.1)
-    * Changes:
-        * ...
+* [Version 0.2.0](https://github.com/siom79/jdrivesync/releases/tag/jdrivesync-0.2.0)
