@@ -245,6 +245,7 @@ public class GoogleDriveAdapter {
 			LOGGER.log(Level.FINE, "Inserting new file '" + syncFile.getPath() + "' (" + bytesWithUnit(attr.size()) + ").");
 			if (!options.isDryRun()) {
 				final InputStream finalInputStream = inputStream;
+				long startMillis = System.currentTimeMillis();
 				File insertedFile = executeWithRetry(options, () -> {
 					Drive.Files.Insert insert = drive.files().insert(remoteFile, new InputStreamContent(remoteFile.getMimeType(), finalInputStream));
 					MediaHttpUploader mediaHttpUploader = insert.getMediaHttpUploader();
@@ -252,6 +253,10 @@ public class GoogleDriveAdapter {
 					mediaHttpUploader.setProgressListener(uploader -> LOGGER.log(Level.FINE, "Uploaded " + bytesWithUnit(uploader.getNumBytesUploaded()) + ", " + uploader.getUploadState()));
 					return insert.execute();
 				});
+				long duration = System.currentTimeMillis() - startMillis;
+				if(LOGGER.isLoggable(Level.FINE)) {
+					LOGGER.log(Level.FINE, String.format("Upload took %s ms for %s bytes: %.2f KB/s.", duration, attr.size(), (float) (attr.size() / 1024) / (float) duration));
+				}
 				syncFile.setRemoteFile(Optional.of(insertedFile));
 			}
 		} catch (IOException e) {
