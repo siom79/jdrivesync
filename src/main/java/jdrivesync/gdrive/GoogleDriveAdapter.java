@@ -255,7 +255,7 @@ public class GoogleDriveAdapter {
 				});
 				long duration = System.currentTimeMillis() - startMillis;
 				if(LOGGER.isLoggable(Level.FINE)) {
-					LOGGER.log(Level.FINE, String.format("Upload took %s ms for %s bytes: %.2f KB/s.", duration, attr.size(), (float) (attr.size() / 1024) / (float) duration));
+					LOGGER.log(Level.FINE, String.format("Upload took %s ms for %s bytes: %.2f KB/s.", duration, attr.size(), (float) (attr.size() / 1024) / (float) (duration / 1000)));
 				}
 				syncFile.setRemoteFile(Optional.of(insertedFile));
 			}
