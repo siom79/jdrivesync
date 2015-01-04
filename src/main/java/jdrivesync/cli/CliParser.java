@@ -26,9 +26,9 @@ public class CliParser {
         SyncUp("-u", "--up", "Synchronization is performed from the local to the remote site (default)."),
         SyncDown("-d", "--down", "Synchronization is performed from the remote to the local site."),
         HtmlReport(null, "--html-report", "Creates an HTML report of the synchronization."),
-        MaxFileSize("-m", "--max-file-size", "Provides the maximum file size in MB.", "<maxFileSize>"),
-        Password("-p", "--password", "The password used to encrypt/decrypt the files.", "<password>"),
-        EncryptFile("-e", "--encrypt-files", "Provides a file with newline separated file and/or path name patterns that should be encrypted.", "<encrypt-file>");
+        MaxFileSize("-m", "--max-file-size", "Provides the maximum file size in MB.", "<maxFileSize>");
+        //Password("-p", "--password", "The password used to encrypt/decrypt the files.", "<password>"),
+        //EncryptFile("-e", "--encrypt-files", "Provides a file with newline separated file and/or path name patterns that should be encrypted.", "<encrypt-file>");
 
         private final String shortOption;
         private final String longOption;
@@ -128,14 +128,6 @@ public class CliParser {
                     throw new JDriveSyncException(JDriveSyncException.Reason.InvalidCliParameter, "Argument for option '" + arg + "' is not an integer.");
                 }
                 options.setMaxFileSize(Optional.of(maxFileSizeInteger * Constants.MB));
-            } else if (argument == Argument.EncryptFile) {
-                String optionWithArgument = getOptionWithArgument(arg, sae);
-                List<String> lines = readFile(optionWithArgument);
-                FileNamePatterns encryptFiles = FileNamePatterns.create(lines);
-                options.setEncryptFiles(encryptFiles);
-            } else if (argument == Argument.Password) {
-                String passwdArg = getOptionWithArgument(arg, sae);
-                options.setEncryptPassword(passwdArg);
             } else {
                 throw new JDriveSyncException(JDriveSyncException.Reason.InvalidCliParameter, "The parameter '" + arg + "' is not valid.");
             }
