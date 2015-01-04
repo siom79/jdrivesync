@@ -171,8 +171,13 @@ public class Synchronization {
 							BasicFileAttributes attr = Files.readAttributes(localFile.toPath(), BasicFileAttributes.class);
 							FileTime modifiedDateLocal = attr.lastModifiedTime();
 							DateTime modifiedDateRemote = remoteChild.getModifiedDate();
+							long sizeLocal = attr.size();
+							Long sizeRemote = remoteChild.getFileSize() == null ? 0L : remoteChild.getFileSize();
 							if (!datesAreEqual(modifiedDateLocal.toMillis(), modifiedDateRemote.getValue(), syncItem)) {
 								LOGGER.log(Level.FINE, "Last modification dates are not equal for file '" + syncItemFound.getPath() + "' (local: " + DATE_FORMAT.format(new Date(modifiedDateLocal.toMillis())) + "; remote: " + DATE_FORMAT.format(new Date(modifiedDateRemote.getValue())) + "). Checking MD5 checksums.");
+								performChecksumCheck(syncItemFound, localFile, true);
+							} else if(sizeLocal != sizeRemote) {
+								LOGGER.log(Level.FINE, "File sizes are not equal for file '" + syncItemFound.getPath() + "' (local: " + sizeLocal + "; remote: " + sizeRemote + "). Checking MD5 checksums.");
 								performChecksumCheck(syncItemFound, localFile, true);
 							} else {
 								LOGGER.log(Level.FINE, "Last modification dates are equal for file '" + syncItemFound.getPath() + "' (local: " + DATE_FORMAT.format(new Date(modifiedDateLocal.toMillis())) + "; remote: " + DATE_FORMAT.format(new Date(modifiedDateRemote.getValue())) + "). Not updating file.");
@@ -435,7 +440,13 @@ public class Synchronization {
 							try {
 								BasicFileAttributes attr = fileSystemAdapter.readAttributes(file);
 								FileTime localLastModifiedTime = attr.lastModifiedTime();
+								long sizeLocal = attr.size();
+								long sizeRemote = remoteFile.getFileSize() == null ? 0L : remoteFile.getFileSize();
 								if (!datesAreEqual(localLastModifiedTime.toMillis(), remoteFileModifiedDate.getValue(), syncItem)) {
+									LOGGER.log(Level.FINE, "Last modification dates are not equal for file '" + syncItem.getPath() + "' (local: " + DATE_FORMAT.format(new Date(localLastModifiedTime.toMillis())) + "; remote: " + DATE_FORMAT.format(new Date(remoteFileModifiedDate.getValue())) + "). Checking MD5 checksums.");
+									performChecksumCheck(file, syncItem, remoteFile, true);
+								} else if(sizeLocal != sizeRemote) {
+									LOGGER.log(Level.FINE, "File sizes are not equal for file '" + syncItem.getPath() + "' (local: " + sizeLocal + "; remote: " + sizeRemote + "). Checking MD5 checksums.");
 									performChecksumCheck(file, syncItem, remoteFile, true);
 								} else {
 									syncItem.setLocalFile(Optional.of(file));
