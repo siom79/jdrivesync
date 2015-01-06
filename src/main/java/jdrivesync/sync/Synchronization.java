@@ -180,7 +180,7 @@ public class Synchronization {
 								LOGGER.log(Level.FINE, "File sizes are not equal for file '" + syncItemFound.getPath() + "' (local: " + sizeLocal + "; remote: " + sizeRemote + "). Checking MD5 checksums.");
 								performChecksumCheck(syncItemFound, localFile, true);
 							} else {
-								LOGGER.log(Level.FINE, "Last modification dates are equal for file '" + syncItemFound.getPath() + "' (local: " + DATE_FORMAT.format(new Date(modifiedDateLocal.toMillis())) + "; remote: " + DATE_FORMAT.format(new Date(modifiedDateRemote.getValue())) + "). Not updating file.");
+								LOGGER.log(Level.FINE, "Last modification dates and sizes are equal for file '" + syncItemFound.getPath() + "' (local: " + DATE_FORMAT.format(new Date(modifiedDateLocal.toMillis())) + ", " + sizeLocal + " bytes; remote: " + DATE_FORMAT.format(new Date(modifiedDateRemote.getValue())) + ", " + sizeRemote + " bytes). Not updating file.");
 								ReportFactory.getInstance(options).log(new ReportEntry(syncItemFound.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Unchanged));
 							}
 						}
@@ -450,7 +450,7 @@ public class Synchronization {
 									performChecksumCheck(file, syncItem, remoteFile, true);
 								} else {
 									syncItem.setLocalFile(Optional.of(file));
-									LOGGER.log(Level.FINE, "Last modification dates for file '" + syncItem.getPath() + "' are equal.");
+									LOGGER.log(Level.FINE, "Last modification dates and sizes are equal for file '" + syncItem.getPath() + "' (local: " + DATE_FORMAT.format(new Date(localLastModifiedTime.toMillis())) + ", " + sizeLocal + " bytes; remote: " + DATE_FORMAT.format(new Date(remoteFileModifiedDate.getValue())) + ", " + sizeRemote + " bytes). Not updating file.");
 									ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Unchanged));
 								}
 							} catch (IOException e) {
