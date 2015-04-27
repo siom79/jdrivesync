@@ -21,6 +21,8 @@ import jdrivesync.model.SyncItem;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
@@ -249,6 +251,7 @@ public class GoogleDriveAdapter {
 				File insertedFile = executeWithRetry(options, () -> {
 					Drive.Files.Insert insert = drive.files().insert(remoteFile, new InputStreamContent(remoteFile.getMimeType(), finalInputStream));
 					MediaHttpUploader mediaHttpUploader = insert.getMediaHttpUploader();
+					mediaHttpUploader.setDisableGZipContent(true);
 					LOGGER.log(Level.FINE, "Chunk size: " + mediaHttpUploader.getChunkSize());
 					mediaHttpUploader.setProgressListener(uploader -> LOGGER.log(Level.FINE, "Uploaded " + bytesWithUnit(uploader.getNumBytesUploaded()) + ", " + uploader.getUploadState()));
 					return insert.execute();

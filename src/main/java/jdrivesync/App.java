@@ -11,6 +11,8 @@ import jdrivesync.sync.Synchronization;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;

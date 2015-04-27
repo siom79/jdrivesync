@@ -11,7 +11,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.http.version>1.19.0</project.http.version>
         <project.oauth.version>1.19.0</project.oauth.version>
-        <project.google-drive-service.version>v2-rev155-1.19.0</project.google-drive-service.version>
+        <project.google-drive-service.version>v2-rev168-1.19.0</project.google-drive-service.version>
         <github.account>siom79</github.account>
         <github.project>jdrivesync</github.project>
     </properties>
