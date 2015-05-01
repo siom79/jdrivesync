@@ -46,12 +46,10 @@ jdrivesync can create an HTML file that reports the actions taken in the last ru
 jdrivesync just uses the last modification timestamp and/or the MD5 checksum to determine whether a file has changed.
 It does not utilize any application-specific metadata. Hence you can start working with an already existing backup that has been created by another client.
 
-##Warning##
+##Limitations##
 
 jdrivesync is still in a beta state. It is being tested with a bunch of automatic integration tests on small data sets and manually on a large data set (>33.000 files),
 but please do not use it with production data. Always run jdrivesync on a copy of your production data!
-
-##Limitations##
 
 Unfortunately the current version of the Google Drive API has a server-side bug regarding resumable uploades that take longer than the expiration time of
 the access token (see for example [here](http://stackoverflow.com/questions/23789284/resumable-upload-error-401) or [here](https://code.google.com/p/google-api-python-client/issues/detail?id=231)).
@@ -131,7 +129,7 @@ patterns and provide the path to this file using the option -i:
 The patterns should follow these rules:
 * Blank lines are ignored.
 * Leading and trailing spaces are ignored.
-* If the line starts with # it is treated as comment. If the first character should be #, use \#.
+* If the line starts with # it is treated as comment. If the first character should be #, use \\#.
 * All patterns are seen relative from the root of your local directory (example: doc/git.html).
 * Use / as path separator (and not the backslash).
 * Use \* as wildcard for a file name. The pattern doc/*.html ignores all files ending with .html inside doc.
@@ -140,5 +138,4 @@ The patterns should follow these rules:
 * If the pattern contains /\*\*/ (e.g. foo/\*\*/xy) it will expand to zero or more directories that are in between foo and xy.
 
 ##Downloads##
-The following releases are available:
-* [Version 0.2.1](https://github.com/siom79/jdrivesync/releases/tag/jdrivesync-0.2.1)
+The latest version can be downloaded from the [release page](https://github.com/siom79/jdrivesync/releases).
