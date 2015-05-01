@@ -95,14 +95,16 @@ public class GoogleDriveAdapter {
 
 	private void removeDuplicates(List<File> resultList) {
 		Map<String, File> fileNameMap = new HashMap<>();
-		for (File file : resultList) {
+		Iterator<File> iterator = resultList.iterator();
+		while (iterator.hasNext()) {
+			File file = iterator.next();
 			String title = file.getTitle();
 			File titleFound = fileNameMap.get(title);
 			if (titleFound == null) {
 				fileNameMap.put(title, file);
 			} else {
 				LOGGER.log(Level.WARNING, "Ignoring remote file '" + title + "' (id: '" + file.getId() + "') because its title/name appears more than once in this folder.");
-				resultList.remove(file);
+				iterator.remove();
 			}
 		}
 	}
