@@ -33,7 +33,7 @@ public class ITBigFileUpSync extends BaseClass {
 	private void createTestData(String name) throws IOException {
 		deleteDirectorySubtree(Paths.get(basePathTestData(), name));
 		Files.createDirectory(Paths.get(basePathTestData(), name));
-		byte[] bytes = new byte[512 * 1024];
+		byte[] bytes = new byte[1024 * 1024];
 		Random random = new Random();
 		random.nextBytes(bytes);
 		Files.write(Paths.get(basePathTestData(), name, "bigFile.bin"), bytes, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);

@@ -248,8 +248,8 @@ public class GoogleDriveAdapter {
 			if (!options.isDryRun()) {
 				long startMillis = System.currentTimeMillis();
 				File insertedFile = executeWithRetry(options, () -> {
-					GenericUrl url = new GenericUrl("https://www.googleapis.com/upload/drive/v2/files?uploadType=media");
-					HttpContent content = new HttpContent() {
+					GenericUrl url = new GenericUrl("https://www.googleapis.com/upload/drive/v2/files?uploadType=resumable");
+					HttpContent fileContent = new HttpContent() {
 						@Override
 						public long getLength() throws IOException {
 							return localFile.length();
@@ -278,14 +278,26 @@ public class GoogleDriveAdapter {
 						}
 					};
 					JsonHttpContent metadataContent = new JsonHttpContent(drive.getJsonFactory(), remoteFile);
-					MultipartContent multipartContent = new MultipartContent().setContentParts(Arrays.asList(metadataContent, content));
-					HttpRequest httpRequest = drive.getRequestFactory().buildPostRequest(url, multipartContent);
+					HttpRequest httpRequest = drive.getRequestFactory().buildPostRequest(url, metadataContent);
+					LOGGER.log(Level.FINE, "Executing session initiation request to URL " + url);
 					HttpResponse httpResponse = httpRequest.execute();
 					int statusCode = httpResponse.getStatusCode();
-					LOGGER.log(Level.FINE, "Upload returned status code " + statusCode + " and status message " + httpResponse.getStatusMessage());
+					LOGGER.log(Level.FINE, "Session initiation request returned status code " + statusCode + " and status message " + httpResponse.getStatusMessage());
 					if (statusCode == HttpStatusCodes.STATUS_CODE_OK) {
-						httpRequest.setParser(drive.getObjectParser());
-						return httpResponse.parseAs(File.class);
+						HttpHeaders headers = httpResponse.getHeaders();
+						String location = headers.getLocation();
+						LOGGER.log(Level.FINE, "Session initiation request returned upload location: " + location);
+						GenericUrl putUrl = new GenericUrl(location);
+						HttpRequest putRequest = drive.getRequestFactory().buildPutRequest(putUrl, fileContent);
+						LOGGER.log(Level.FINE, "Executing upload request to URL " + putUrl);
+						HttpResponse putResponse = putRequest.execute();
+						LOGGER.log(Level.FINE, "Upload request returned status code " + statusCode + " and status message " + httpResponse.getStatusMessage());
+						statusCode = putResponse.getStatusCode();
+						if (statusCode == HttpStatusCodes.STATUS_CODE_OK) {
+							putRequest.setParser(drive.getObjectParser());
+							return putResponse.parseAs(File.class);
+						}
+						//TODO: resume upload if necessary
 					}
 					throw new JDriveSyncException(JDriveSyncException.Reason.IOException, "Failed to upload file '" + localFile +
 						"': status code " + statusCode + " and status message " + httpResponse.getStatusMessage());
