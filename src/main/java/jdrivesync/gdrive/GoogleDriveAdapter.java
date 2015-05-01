@@ -267,12 +267,13 @@ public class GoogleDriveAdapter {
 
 						@Override
 						public void writeTo(OutputStream out) throws IOException {
-							FileInputStream fis = new FileInputStream(localFile);
-							byte[] buffer = new byte[16*1024];
-							int read = fis.read(buffer);
-							while (read != -1) {
-								out.write(buffer, 0, read);
-								read = fis.read(buffer);
+							try(FileInputStream fis = new FileInputStream(localFile)) {
+								byte[] buffer = new byte[16 * 1024];
+								int read = fis.read(buffer);
+								while (read != -1) {
+									out.write(buffer, 0, read);
+									read = fis.read(buffer);
+								}
 							}
 						}
 					};
