@@ -3,7 +3,9 @@ package jdrivesync.gdrive;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.media.MediaHttpUploader;
 import com.google.api.client.http.*;
+import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.util.DateTime;
+import com.google.api.client.util.IOUtils;
 import com.google.api.client.util.Lists;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
@@ -18,9 +20,7 @@ import jdrivesync.model.SyncDirectory;
 import jdrivesync.model.SyncFile;
 import jdrivesync.model.SyncItem;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
@@ -229,11 +229,11 @@ public class GoogleDriveAdapter {
 	}
 
 	public void store(SyncFile syncFile) {
-		String mimeType = determineMimeType(syncFile.getLocalFile().get());
+		final String mimeType = determineMimeType(syncFile.getLocalFile().get());
 		Drive drive = DriveFactory.getDrive(this.credential);
 		InputStream inputStream = null;
 		try {
-			java.io.File localFile = syncFile.getLocalFile().get();
+			final java.io.File localFile = syncFile.getLocalFile().get();
 			inputStream = new FileInputStream(localFile);
 			if (options.getEncryptFiles().matches(syncFile.getPath(), false)) {
 				inputStream = encryption.encrypt(Files.readAllBytes(localFile.toPath()));
@@ -246,15 +246,48 @@ public class GoogleDriveAdapter {
 			remoteFile.setModifiedDate(new DateTime(attr.lastModifiedTime().toMillis()));
 			LOGGER.log(Level.FINE, "Inserting new file '" + syncFile.getPath() + "' (" + bytesWithUnit(attr.size()) + ").");
 			if (!options.isDryRun()) {
-				final InputStream finalInputStream = inputStream;
 				long startMillis = System.currentTimeMillis();
 				File insertedFile = executeWithRetry(options, () -> {
-					Drive.Files.Insert insert = drive.files().insert(remoteFile, new InputStreamContent(remoteFile.getMimeType(), finalInputStream));
-					MediaHttpUploader mediaHttpUploader = insert.getMediaHttpUploader();
-					mediaHttpUploader.setDisableGZipContent(true);
-					LOGGER.log(Level.FINE, "Chunk size: " + mediaHttpUploader.getChunkSize());
-					mediaHttpUploader.setProgressListener(uploader -> LOGGER.log(Level.FINE, "Uploaded " + bytesWithUnit(uploader.getNumBytesUploaded()) + ", " + uploader.getUploadState()));
-					return insert.execute();
+					GenericUrl url = new GenericUrl("https://www.googleapis.com/upload/drive/v2/files?uploadType=media");
+					HttpContent content = new HttpContent() {
+						@Override
+						public long getLength() throws IOException {
+							return localFile.length();
+						}
+
+						@Override
+						public String getType() {
+							return mimeType;
+						}
+
+						@Override
+						public boolean retrySupported() {
+							return false;
+						}
+
+						@Override
+						public void writeTo(OutputStream out) throws IOException {
+							FileInputStream fis = new FileInputStream(localFile);
+							byte[] buffer = new byte[16*1024];
+							int read = fis.read(buffer);
+							while (read != -1) {
+								out.write(buffer, 0, read);
+								read = fis.read(buffer);
+							}
+						}
+					};
+					JsonHttpContent metadataContent = new JsonHttpContent(drive.getJsonFactory(), remoteFile);
+					MultipartContent multipartContent = new MultipartContent().setContentParts(Arrays.asList(metadataContent, content));
+					HttpRequest httpRequest = drive.getRequestFactory().buildPostRequest(url, multipartContent);
+					HttpResponse httpResponse = httpRequest.execute();
+					int statusCode = httpResponse.getStatusCode();
+					LOGGER.log(Level.FINE, "Upload returned status code " + statusCode + " and status message " + httpResponse.getStatusMessage());
+					if (statusCode == HttpStatusCodes.STATUS_CODE_OK) {
+						httpRequest.setParser(drive.getObjectParser());
+						return httpResponse.parseAs(File.class);
+					}
+					throw new JDriveSyncException(JDriveSyncException.Reason.IOException, "Failed to upload file '" + localFile +
+						"': status code " + statusCode + " and status message " + httpResponse.getStatusMessage());
 				});
 				long duration = System.currentTimeMillis() - startMillis;
 				if(LOGGER.isLoggable(Level.FINE)) {
