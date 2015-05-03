@@ -304,6 +304,7 @@ public class GoogleDriveAdapter {
 		@Override
 		public void writeTo(OutputStream out) throws IOException {
 			LOGGER.log(Level.FINE, "Writing chunk " + this.currentChunkStart + "-" + this.currentChunkEnd);
+			long startMillis = System.currentTimeMillis();
 			try (RandomAccessFile randomAccessFile = new RandomAccessFile(this.file, "r")) {
 				randomAccessFile.seek(currentChunkStart);
 				byte[] buffer = new byte[16*1024];
@@ -321,6 +322,9 @@ public class GoogleDriveAdapter {
 					}
 				}
 			}
+			long duration = System.currentTimeMillis() - startMillis;
+			double speed = ((getLength() * 1000) / duration) / 1024;
+			LOGGER.log(Level.FINE, String.format("Writing chunk " + this.currentChunkStart + "-" + this.currentChunkEnd + " took " + duration + "ms (%.2f KB/s).", speed));
 		}
 	}
 
@@ -359,21 +363,19 @@ public class GoogleDriveAdapter {
 					putRequest.getHeaders().setContentRange(contentRange);
 					LOGGER.log(Level.FINE, "Executing PUT request (Content-Length: " + contentLength + "; Content-Range: " + contentRange);
 				}
-				int putResponseStatusCode = -1;
-				String range;
 				try {
 					HttpResponse putResponse = putRequest.execute();
+					int putResponseStatusCode = putResponse.getStatusCode();
 					LOGGER.log(Level.FINE, "Upload request returned status code " + putResponseStatusCode + " and status message " + putResponse.getStatusMessage());
-					putResponseStatusCode = putResponse.getStatusCode();
 					if (putResponseStatusCode == HttpStatusCodes.STATUS_CODE_OK || putResponseStatusCode == 201) {
 						putRequest.setParser(drive.getObjectParser());
 						return putResponse.parseAs(File.class);
 					}
 				} catch (HttpResponseException e) {
-					putResponseStatusCode = e.getStatusCode();
-					range = e.getHeaders().getRange();
-					LOGGER.log(Level.FINE, "Upload request returned status code " + putResponseStatusCode + " and status message " + e.getStatusMessage());
-					if (putResponseStatusCode == 308) {
+					int exceptionStatusCode = e.getStatusCode();
+					String range = e.getHeaders().getRange();
+					LOGGER.log(Level.FINE, "Upload request returned status code " + exceptionStatusCode + " and status message " + e.getStatusMessage());
+					if (exceptionStatusCode == 308) {
 						resume = 0;
 						LOGGER.log(Level.FINE, "Upload request returned range " + range + ".");
 						if (range != null) {
