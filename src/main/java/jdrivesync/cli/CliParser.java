@@ -26,7 +26,10 @@ public class CliParser {
         SyncUp("-u", "--up", "Synchronization is performed from the local to the remote site (default)."),
         SyncDown("-d", "--down", "Synchronization is performed from the remote to the local site."),
         HtmlReport(null, "--html-report", "Creates an HTML report of the synchronization."),
-        MaxFileSize("-m", "--max-file-size", "Provides the maximum file size in MB.", "<maxFileSize>");
+        MaxFileSize("-m", "--max-file-size", "Provides the maximum file size in MB.", "<maxFileSize>"),
+        HttpChunkSize(null, "--http-chunk-size", "The size of a chunk in MB used for chunked uploads (default: 10MB)."),
+        NetworkNumberOfReries(null, "--network-number-of-retries", "The number of times how often a request is retried (default: 3)."),
+        NetworkSleepBetweenRetries(null, "--network-sleep-between-retries", "The number of seconds to sleep between retries (default: 10).");
         //Password("-p", "--password", "The password used to encrypt/decrypt the files.", "<password>"),
         //EncryptFile("-e", "--encrypt-files", "Provides a file with newline separated file and/or path name patterns that should be encrypted.", "<encrypt-file>");
 
@@ -79,7 +82,6 @@ public class CliParser {
             sb.append("\n");
             sb.append("\t");
             sb.append(description);
-            sb.append("\n\n");
             return sb.toString();
         }
     }
@@ -128,6 +130,44 @@ public class CliParser {
                     throw new JDriveSyncException(JDriveSyncException.Reason.InvalidCliParameter, "Argument for option '" + arg + "' is not an integer.");
                 }
                 options.setMaxFileSize(Optional.of(maxFileSizeInteger * Constants.MB));
+            } else if (argument == Argument.HttpChunkSize) {
+                String option = getOptionWithArgument(arg, sae);
+                long httpChunkSizeMB;
+                try {
+                    httpChunkSizeMB = Long.valueOf(option);
+                } catch (NumberFormatException e) {
+                    throw new JDriveSyncException(JDriveSyncException.Reason.InvalidCliParameter, "Argument for option '" + arg + "' is not an integer.");
+                }
+                long httpChunkSizeBytes = httpChunkSizeMB * Constants.MB;
+                httpChunkSizeBytes = (httpChunkSizeBytes / 256) * 256; // chunk size must be multiple of 256
+                if (httpChunkSizeMB <= 0) {
+                    throw new JDriveSyncException(JDriveSyncException.Reason.InvalidCliParameter, "Argument for option '" + arg + "' is a negative integer or zero.");
+                }
+                options.setHttpChunkSizeInBytes(httpChunkSizeBytes);
+            } else if (argument == Argument.NetworkNumberOfReries) {
+                String option = getOptionWithArgument(arg, sae);
+                int networkNumberOfRetries;
+                try {
+                    networkNumberOfRetries = Integer.valueOf(option);
+                } catch (NumberFormatException e) {
+                    throw new JDriveSyncException(JDriveSyncException.Reason.InvalidCliParameter, "Argument for option '" + arg + "' is not an integer.");
+                }
+				if (networkNumberOfRetries < 0) {
+					throw new JDriveSyncException(JDriveSyncException.Reason.InvalidCliParameter, "Argument for option '" + arg + "' is a negative integer.");
+				}
+                options.setNetworkNumberOfAttempts(networkNumberOfRetries);
+            } else if (argument == Argument.NetworkSleepBetweenRetries) {
+                String option = getOptionWithArgument(arg, sae);
+                int optionAsInteger;
+                try {
+                    optionAsInteger = Integer.valueOf(option);
+                } catch (NumberFormatException e) {
+                    throw new JDriveSyncException(JDriveSyncException.Reason.InvalidCliParameter, "Argument for option '" + arg + "' is not an integer.");
+                }
+				if (optionAsInteger <= 0) {
+					throw new JDriveSyncException(JDriveSyncException.Reason.InvalidCliParameter, "Argument for option '" + arg + "' is a negative integer or zero.");
+				}
+                options.setNetworkSleepBetweenAttempts(optionAsInteger * 1000);
             } else {
                 throw new JDriveSyncException(JDriveSyncException.Reason.InvalidCliParameter, "The parameter '" + arg + "' is not valid.");
             }

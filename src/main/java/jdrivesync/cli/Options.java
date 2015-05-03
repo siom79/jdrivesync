@@ -1,5 +1,7 @@
 package jdrivesync.cli;
 
+import jdrivesync.constants.Constants;
+
 import java.io.File;
 import java.util.Arrays;
 import java.util.Optional;
@@ -12,6 +14,7 @@ public class Options {
     private boolean useChecksum = false;
     private Optional<String> authenticationFile = Optional.empty();
     private int networkNumberOfAttempts = 3;
+    private long networkSleepBetweenAttempts = 10 * 1000;
     private FileNamePatterns ignoreFiles = FileNamePatterns.create(Arrays.asList(""));
     private boolean htmlReport = false;
     private SyncDirection syncDirection = SyncDirection.Up;
@@ -19,6 +22,15 @@ public class Options {
     private FileNamePatterns encryptFiles = FileNamePatterns.create(Arrays.asList(""));
     private String encryptPassword = "";
     private long lastModificationDateThreshold = 1500;
+    private long httpChunkSizeInBytes = 10 * Constants.MB;
+
+    public long getNetworkSleepBetweenAttempts() {
+        return networkSleepBetweenAttempts;
+    }
+
+    public void setNetworkSleepBetweenAttempts(long networkSleepBetweenAttempts) {
+        this.networkSleepBetweenAttempts = networkSleepBetweenAttempts;
+    }
 
     public void setLocalRootDir(Optional<File> localRootDir) {
         this.localRootDir = localRootDir;
@@ -54,14 +66,23 @@ public class Options {
 
     @Override
     public String toString() {
-        return "localRootDir=" + (localRootDir.isPresent() ? localRootDir.get().getAbsolutePath() : "n.a.") +
-                ", remoteRootDir=" + (remoteRootDir.isPresent() ? remoteRootDir.get() : "n.a.") +
+        return "Options{" +
+                "localRootDir=" + localRootDir +
+                ", remoteRootDir=" + remoteRootDir +
                 ", dryRun=" + dryRun +
                 ", deleteFiles=" + deleteFiles +
                 ", useChecksum=" + useChecksum +
-                ", authenticationFile=" + (authenticationFile.isPresent() ? authenticationFile.get() : "n.a.") +
+                ", authenticationFile=" + authenticationFile +
+                ", networkNumberOfAttempts=" + networkNumberOfAttempts +
+                ", ignoreFiles=" + ignoreFiles +
                 ", htmlReport=" + htmlReport +
-                ", syncDirection=" + syncDirection;
+                ", syncDirection=" + syncDirection +
+                ", maxFileSize=" + maxFileSize +
+                ", encryptFiles=" + encryptFiles +
+                ", encryptPassword='" + encryptPassword + '\'' +
+                ", lastModificationDateThreshold=" + lastModificationDateThreshold +
+                ", networkSleepBetweenAttempts=" + networkSleepBetweenAttempts +
+                '}';
     }
 
     public void setAuthenticationFile(Optional<String> authenticationFile) {
@@ -74,6 +95,10 @@ public class Options {
 
     public int getNetworkNumberOfRetries() {
         return networkNumberOfAttempts;
+    }
+
+    public void setNetworkNumberOfAttempts(int networkNumberOfAttempts) {
+        this.networkNumberOfAttempts = networkNumberOfAttempts;
     }
 
     public void setRemoteRootDir(Optional<String> remoteRootDir) {
@@ -134,5 +159,13 @@ public class Options {
 
     public long getLastModificationDateThreshold() {
         return lastModificationDateThreshold;
+    }
+
+    public void setHttpChunkSizeInBytes(long httpChunkSize) {
+        this.httpChunkSizeInBytes = httpChunkSize;
+    }
+
+    public long getHttpChunkSizeInBytes() {
+        return httpChunkSizeInBytes;
     }
 }

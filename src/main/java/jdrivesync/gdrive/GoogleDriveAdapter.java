@@ -1,11 +1,9 @@
 package jdrivesync.gdrive;
 
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.googleapis.media.MediaHttpUploader;
 import com.google.api.client.http.*;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.util.DateTime;
-import com.google.api.client.util.IOUtils;
 import com.google.api.client.util.Lists;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
@@ -21,8 +19,6 @@ import jdrivesync.model.SyncFile;
 import jdrivesync.model.SyncItem;
 
 import java.io.*;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
@@ -37,11 +33,13 @@ public class GoogleDriveAdapter {
 	private static final Logger LOGGER = Logger.getLogger(GoogleDriveAdapter.class.getName());
 	private final Credential credential;
 	private final Options options;
+	private final DriveFactory driveFactory;
 	private final Encryption encryption;
 
-	public GoogleDriveAdapter(Credential credential, Options options) {
+	public GoogleDriveAdapter(Credential credential, Options options, DriveFactory driveFactory) {
 		this.credential = credential;
 		this.options = options;
+		this.driveFactory = driveFactory;
 		this.encryption = new Encryption(options);
 	}
 
@@ -55,7 +53,7 @@ public class GoogleDriveAdapter {
 	}
 
 	public File getFile(String id) {
-		Drive drive = DriveFactory.getDrive(this.credential);
+		Drive drive = driveFactory.getDrive(this.credential);
 		try {
 			File file = executeWithRetry(options, () -> drive.files().get(id).execute());
 			if (LOGGER.isLoggable(Level.FINE)) {
@@ -69,7 +67,7 @@ public class GoogleDriveAdapter {
 
 	public List<File> listChildren(String parentId) {
 		List<File> resultList = new LinkedList<File>();
-		Drive drive = DriveFactory.getDrive(this.credential);
+		Drive drive = driveFactory.getDrive(this.credential);
 		try {
 			Drive.Files.List request = drive.files().list();
 			request.setQ("trashed = false and '" + parentId + "' in parents");
@@ -118,7 +116,7 @@ public class GoogleDriveAdapter {
 	}
 
 	private void delete(File file) {
-		Drive drive = DriveFactory.getDrive(this.credential);
+		Drive drive = driveFactory.getDrive(this.credential);
 		try {
 			String id = file.getId();
 			if (isGoogleAppsDocument(file)) {
@@ -157,7 +155,7 @@ public class GoogleDriveAdapter {
 	}
 
 	public InputStream downloadFile(SyncItem syncItem) {
-		Drive drive = DriveFactory.getDrive(this.credential);
+		Drive drive = driveFactory.getDrive(this.credential);
 		InputStream inputStream = null;
 		try {
 			File remoteFile = syncItem.getRemoteFile().get();
@@ -174,7 +172,7 @@ public class GoogleDriveAdapter {
 	}
 
 	public void updateFile(SyncItem syncItem) {
-		Drive drive = DriveFactory.getDrive(this.credential);
+		Drive drive = driveFactory.getDrive(this.credential);
 		try {
 			java.io.File localFile = syncItem.getLocalFile().get();
 			File remoteFile = syncItem.getRemoteFile().get();
@@ -196,7 +194,7 @@ public class GoogleDriveAdapter {
 	}
 
 	public void updateMetadata(SyncItem syncItem) {
-		Drive drive = DriveFactory.getDrive(this.credential);
+		Drive drive = driveFactory.getDrive(this.credential);
 		try {
 			java.io.File localFile = syncItem.getLocalFile().get();
 			File remoteFile = syncItem.getRemoteFile().get();
@@ -232,7 +230,7 @@ public class GoogleDriveAdapter {
 
 	public void store(SyncFile syncFile) {
 		final String mimeType = determineMimeType(syncFile.getLocalFile().get());
-		Drive drive = DriveFactory.getDrive(this.credential);
+		Drive drive = driveFactory.getDrive(this.credential);
 		InputStream inputStream = null;
 		try {
 			final java.io.File localFile = syncFile.getLocalFile().get();
@@ -249,61 +247,14 @@ public class GoogleDriveAdapter {
 			LOGGER.log(Level.FINE, "Inserting new file '" + syncFile.getPath() + "' (" + bytesWithUnit(attr.size()) + ").");
 			if (!options.isDryRun()) {
 				long startMillis = System.currentTimeMillis();
-				File insertedFile = executeWithRetry(options, () -> {
-					GenericUrl url = new GenericUrl("https://www.googleapis.com/upload/drive/v2/files?uploadType=resumable");
-					HttpContent fileContent = new HttpContent() {
-						@Override
-						public long getLength() throws IOException {
-							return localFile.length();
-						}
-
-						@Override
-						public String getType() {
-							return mimeType;
-						}
-
-						@Override
-						public boolean retrySupported() {
-							return false;
-						}
-
-						@Override
-						public void writeTo(OutputStream out) throws IOException {
-							try(FileInputStream fis = new FileInputStream(localFile)) {
-								byte[] buffer = new byte[16 * 1024];
-								int read = fis.read(buffer);
-								while (read != -1) {
-									out.write(buffer, 0, read);
-									read = fis.read(buffer);
-								}
-							}
-						}
-					};
-					JsonHttpContent metadataContent = new JsonHttpContent(drive.getJsonFactory(), remoteFile);
-					HttpRequest httpRequest = drive.getRequestFactory().buildPostRequest(url, metadataContent);
-					LOGGER.log(Level.FINE, "Executing session initiation request to URL " + url);
-					HttpResponse httpResponse = httpRequest.execute();
-					int statusCode = httpResponse.getStatusCode();
-					LOGGER.log(Level.FINE, "Session initiation request returned status code " + statusCode + " and status message " + httpResponse.getStatusMessage());
-					if (statusCode == HttpStatusCodes.STATUS_CODE_OK) {
-						HttpHeaders headers = httpResponse.getHeaders();
-						String location = headers.getLocation();
-						LOGGER.log(Level.FINE, "Session initiation request returned upload location: " + location);
-						GenericUrl putUrl = new GenericUrl(location);
-						HttpRequest putRequest = drive.getRequestFactory().buildPutRequest(putUrl, fileContent);
-						LOGGER.log(Level.FINE, "Executing upload request to URL " + putUrl);
-						HttpResponse putResponse = putRequest.execute();
-						LOGGER.log(Level.FINE, "Upload request returned status code " + statusCode + " and status message " + httpResponse.getStatusMessage());
-						statusCode = putResponse.getStatusCode();
-						if (statusCode == HttpStatusCodes.STATUS_CODE_OK) {
-							putRequest.setParser(drive.getObjectParser());
-							return putResponse.parseAs(File.class);
-						}
-						//TODO: resume upload if necessary
-					}
-					throw new JDriveSyncException(JDriveSyncException.Reason.IOException, "Failed to upload file '" + localFile +
-						"': status code " + statusCode + " and status message " + httpResponse.getStatusMessage());
-				});
+				File insertedFile;
+				long chunkSizeLimit = options.getHttpChunkSizeInBytes();
+				if (localFile.length() <= chunkSizeLimit) {
+					LOGGER.log(Level.FINE, "File is smaller or equal than " + bytesWithUnit(chunkSizeLimit) + ": no chunked upload");
+					insertedFile = executeWithRetry(options, () -> resumableUploadNoChunking(mimeType, drive, localFile, remoteFile));
+				} else {
+					insertedFile = executeWithRetry(options, () -> resumableUploadChunking(drive, localFile, remoteFile, chunkSizeLimit));
+				}
 				long duration = System.currentTimeMillis() - startMillis;
 				if(LOGGER.isLoggable(Level.FINE)) {
 					LOGGER.log(Level.FINE, String.format("Upload took %s ms for %s bytes: %.2f KB/s.", duration, attr.size(), (float) (attr.size() / 1024) / (float) (duration / 1000)));
@@ -320,6 +271,208 @@ public class GoogleDriveAdapter {
 				}
 			}
 		}
+	}
+
+	private static class ChunkedHttpContent implements HttpContent {
+		private final String mimeType;
+		private final java.io.File file;
+		private long currentChunkStart;
+		private long currentChunkEnd;
+
+		public ChunkedHttpContent(java.io.File file, String mimeType, long currentChunkStart, long currentChunkEnd) {
+			this.file = file;
+			this.mimeType = mimeType;
+			this.currentChunkStart = currentChunkStart;
+			this.currentChunkEnd = currentChunkEnd;
+		}
+
+		@Override
+		public long getLength() throws IOException {
+			return (currentChunkEnd-currentChunkStart) + 1;
+		}
+
+		@Override
+		public String getType() {
+			return mimeType;
+		}
+
+		@Override
+		public boolean retrySupported() {
+			return false;
+		}
+
+		@Override
+		public void writeTo(OutputStream out) throws IOException {
+			LOGGER.log(Level.FINE, "Writing chunk " + this.currentChunkStart + "-" + this.currentChunkEnd);
+			long startMillis = System.currentTimeMillis();
+			try (RandomAccessFile randomAccessFile = new RandomAccessFile(this.file, "r")) {
+				randomAccessFile.seek(currentChunkStart);
+				byte[] buffer = new byte[16*1024];
+				long bytesToReadLeft = getLength();
+				long bytesToReadNow = bytesToReadLeft >= buffer.length ? buffer.length : bytesToReadLeft;
+				int read = randomAccessFile.read(buffer, 0, (int) bytesToReadNow);
+				while (read != -1) {
+					out.write(buffer, 0, read);
+					bytesToReadLeft -= read;
+					if (bytesToReadLeft > 0) {
+						bytesToReadNow = bytesToReadLeft >= buffer.length ? buffer.length : bytesToReadLeft;
+						read = randomAccessFile.read(buffer, 0, (int) bytesToReadNow);
+					} else {
+						read = -1;
+					}
+				}
+			}
+			long duration = System.currentTimeMillis() - startMillis;
+			double speed = ((getLength() * 1000) / duration) / 1024;
+			LOGGER.log(Level.FINE, String.format("Writing chunk " + this.currentChunkStart + "-" + this.currentChunkEnd + " took " + duration + "ms (%.2f KB/s).", speed));
+		}
+	}
+
+	private File resumableUploadChunking(Drive drive, java.io.File localFile, File remoteFile, long chunkSizeLimit) throws IOException {
+		LOGGER.log(Level.FINE, "File is greater than " + bytesWithUnit(chunkSizeLimit) + ": chunked upload");
+		HttpResponse httpResponse = executeSessionInitiationRequest(drive, remoteFile);
+		int statusCode = httpResponse.getStatusCode();
+		LOGGER.log(Level.FINE, "Session initiation request returned status code " + statusCode + " and status message " + httpResponse.getStatusMessage());
+		if (statusCode == HttpStatusCodes.STATUS_CODE_OK) {
+			HttpHeaders headers = httpResponse.getHeaders();
+			String location = headers.getLocation();
+			LOGGER.log(Level.FINE, "Session initiation request returned upload location: " + location);
+			GenericUrl putUrl = new GenericUrl(location);
+			long currentChunkStart = 0;
+			long currentChunkEnd = (currentChunkStart + options.getHttpChunkSizeInBytes()) - 1;
+			long fileEnd = localFile.length() - 1;
+			int resume = 0;
+			while (currentChunkEnd <= fileEnd) {
+				HttpRequest putRequest = drive.getRequestFactory().buildPutRequest(putUrl, new ChunkedHttpContent(localFile, determineMimeType(localFile), currentChunkStart, currentChunkEnd));
+				if (resume == 0) {
+					long contentLength = currentChunkEnd - currentChunkStart + 1;
+					putRequest.getHeaders().setContentLength(contentLength);
+					String contentRange = "bytes " + currentChunkStart + "-" + currentChunkEnd + "/" + localFile.length();
+					putRequest.getHeaders().setContentRange(contentRange);
+					LOGGER.log(Level.FINE, "Executing PUT request (Content-Length: " + contentLength + "; Content-Range: " + contentRange);
+				} else {
+					if (resume > options.getNetworkNumberOfRetries()) {
+						throw new JDriveSyncException(JDriveSyncException.Reason.IOException, "Failed to upload file '" + localFile +
+								"': Number of max. retries exceeded.");
+					}
+					sleepSilently(resume * 10000);
+					putRequest = drive.getRequestFactory().buildPutRequest(putUrl, new EmptyContent());
+					long contentLength = 0;
+					putRequest.getHeaders().setContentLength(contentLength);
+					String contentRange = "bytes */" + localFile.length();
+					putRequest.getHeaders().setContentRange(contentRange);
+					LOGGER.log(Level.FINE, "Executing PUT request (Content-Length: " + contentLength + "; Content-Range: " + contentRange);
+				}
+				try {
+					HttpResponse putResponse = putRequest.execute();
+					int putResponseStatusCode = putResponse.getStatusCode();
+					LOGGER.log(Level.FINE, "Upload request returned status code " + putResponseStatusCode + " and status message " + putResponse.getStatusMessage());
+					if (putResponseStatusCode == HttpStatusCodes.STATUS_CODE_OK || putResponseStatusCode == 201) {
+						putRequest.setParser(drive.getObjectParser());
+						return putResponse.parseAs(File.class);
+					}
+				} catch (HttpResponseException e) {
+					int exceptionStatusCode = e.getStatusCode();
+					String range = e.getHeaders().getRange();
+					LOGGER.log(Level.FINE, "Upload request returned status code " + exceptionStatusCode + " and status message " + e.getStatusMessage());
+					if (exceptionStatusCode == 308) {
+						resume = 0;
+						LOGGER.log(Level.FINE, "Upload request returned range " + range + ".");
+						if (range != null) {
+							int lastIndexOf = range.lastIndexOf('-');
+							if (lastIndexOf >= 0) {
+								String lastBytesInRangeString = range.substring(lastIndexOf+1, range.length());
+								long lastBytesInRange = Long.valueOf(lastBytesInRangeString);
+								currentChunkStart = lastBytesInRange + 1;
+								currentChunkEnd = (currentChunkStart+options.getHttpChunkSizeInBytes()-1);
+								if (currentChunkEnd > localFile.length()-1) {
+									currentChunkEnd = currentChunkEnd - (currentChunkEnd - (localFile.length()-1));
+								}
+							} else {
+								throw new JDriveSyncException(JDriveSyncException.Reason.IOException, "Failed to upload file '" + localFile +
+										"': Range header of server response did not contain character '-'.");
+							}
+						} else {
+							throw new JDriveSyncException(JDriveSyncException.Reason.IOException, "Failed to upload file '" + localFile +
+									"': Server response did not contain Range header.");
+						}
+					} else {
+						resume++;
+					}
+				} catch (IOException e) {
+					LOGGER.log(Level.FINE, "Upload request failed due to IOException: '" + e.getMessage() + "'. Trying to resume upload.");
+					resume++;
+				}
+			}
+		}
+		throw new JDriveSyncException(JDriveSyncException.Reason.IOException, "Failed to upload file '" + localFile +
+				"': status code " + statusCode + " and status message " + httpResponse.getStatusMessage());
+	}
+
+	private void sleepSilently(int millis) {
+		try {
+			Thread.sleep(millis);
+		} catch (InterruptedException e) {}
+	}
+
+	private File resumableUploadNoChunking(final String mimeType, Drive drive, final java.io.File localFile, File remoteFile) throws IOException {
+		HttpContent fileContent = new HttpContent() {
+			@Override
+			public long getLength() throws IOException {
+				return localFile.length();
+			}
+
+			@Override
+			public String getType() {
+				return mimeType;
+			}
+
+			@Override
+			public boolean retrySupported() {
+				return false;
+			}
+
+			@Override
+			public void writeTo(OutputStream out) throws IOException {
+				try (FileInputStream fis = new FileInputStream(localFile)) {
+					byte[] buffer = new byte[16 * 1024];
+					int read = fis.read(buffer);
+					while (read != -1) {
+						out.write(buffer, 0, read);
+						read = fis.read(buffer);
+					}
+				}
+			}
+		};
+		HttpResponse httpResponse = executeSessionInitiationRequest(drive, remoteFile);
+		int statusCode = httpResponse.getStatusCode();
+		LOGGER.log(Level.FINE, "Session initiation request returned status code " + statusCode + " and status message " + httpResponse.getStatusMessage());
+		if (statusCode == HttpStatusCodes.STATUS_CODE_OK) {
+			HttpHeaders headers = httpResponse.getHeaders();
+			String location = headers.getLocation();
+			LOGGER.log(Level.FINE, "Session initiation request returned upload location: " + location);
+			GenericUrl putUrl = new GenericUrl(location);
+			HttpRequest putRequest = drive.getRequestFactory().buildPutRequest(putUrl, fileContent);
+			LOGGER.log(Level.FINE, "Executing upload request to URL " + putUrl);
+			HttpResponse putResponse = putRequest.execute();
+			LOGGER.log(Level.FINE, "Upload request returned status code " + statusCode + " and status message " + httpResponse.getStatusMessage());
+			statusCode = putResponse.getStatusCode();
+			if (statusCode == HttpStatusCodes.STATUS_CODE_OK) {
+				putRequest.setParser(drive.getObjectParser());
+				return putResponse.parseAs(File.class);
+			}
+			//TODO: resume upload if necessary
+		}
+		throw new JDriveSyncException(JDriveSyncException.Reason.IOException, "Failed to upload file '" + localFile +
+				"': status code " + statusCode + " and status message " + httpResponse.getStatusMessage());
+	}
+
+	private HttpResponse executeSessionInitiationRequest(Drive drive, File remoteFile) throws IOException {
+		GenericUrl url = new GenericUrl("https://www.googleapis.com/upload/drive/v2/files?uploadType=resumable");
+		JsonHttpContent metadataContent = new JsonHttpContent(drive.getJsonFactory(), remoteFile);
+		HttpRequest httpRequest = drive.getRequestFactory().buildPostRequest(url, metadataContent);
+		LOGGER.log(Level.FINE, "Executing session initiation request to URL " + url);
+		return httpRequest.execute();
 	}
 
 	private String bytesWithUnit(long fileSize) {
@@ -352,7 +505,7 @@ public class GoogleDriveAdapter {
 	}
 
 	public void store(SyncDirectory syncDirectory) {
-		Drive drive = DriveFactory.getDrive(this.credential);
+		Drive drive = driveFactory.getDrive(this.credential);
 		try {
 			java.io.File localFile = syncDirectory.getLocalFile().get();
 			File remoteFile = new File();
@@ -373,7 +526,7 @@ public class GoogleDriveAdapter {
 
 	public File createDirectory(File parentDirectory, String title) {
 		File returnValue = null;
-		Drive drive = DriveFactory.getDrive(this.credential);
+		Drive drive = driveFactory.getDrive(this.credential);
 		try {
 			File remoteFile = new File();
 			remoteFile.setTitle(title);
@@ -397,7 +550,7 @@ public class GoogleDriveAdapter {
 	}
 
 	public List<File> listAll() {
-		Drive drive = DriveFactory.getDrive(this.credential);
+		Drive drive = driveFactory.getDrive(this.credential);
 		try {
 			List<File> result = new ArrayList<>();
 			Drive.Files.List request = drive.files().list();
@@ -414,7 +567,7 @@ public class GoogleDriveAdapter {
 	}
 
 	public List<File> search(Optional<String> title) {
-		Drive drive = DriveFactory.getDrive(this.credential);
+		Drive drive = driveFactory.getDrive(this.credential);
 		try {
 			List<File> result = new ArrayList<File>();
 			Drive.Files.List request = drive.files().list();
@@ -444,6 +597,6 @@ public class GoogleDriveAdapter {
 			Credential credential = GoogleDriveAdapter.authorize();
 			credentialStore.store(credential);
 		}
-		return new GoogleDriveAdapter(credentialStore.getCredential().get(), options);
+		return new GoogleDriveAdapter(credentialStore.getCredential().get(), options, new DriveFactory());
 	}
 }

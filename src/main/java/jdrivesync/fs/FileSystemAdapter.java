@@ -13,8 +13,7 @@ import java.io.InputStream;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-import java.util.Date;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -29,8 +28,11 @@ public class FileSystemAdapter {
 
 	public File[] listFiles(File directory) {
 		File[] files = directory.listFiles();
+		if (files == null) {
+			files = new File[0];
+		}
 		if (LOGGER.isLoggable(Level.FINE)) {
-			if (files != null) {
+			if (files.length > 0) {
 				for (File file : files) {
 					LOGGER.log(Level.FINE, "Directory '" + directory.getAbsolutePath() + "' contains file '" + file.getAbsolutePath() + "'.");
 				}
@@ -38,6 +40,7 @@ public class FileSystemAdapter {
 				LOGGER.log(Level.FINE, "Directory '" + directory.getAbsolutePath() + "' does not contain any files.");
 			}
 		}
+		Arrays.sort(files, (f1, f2) -> f1.getName().compareTo(f2.getName()));
 		return files;
 	}
 

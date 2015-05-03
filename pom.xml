@@ -5,13 +5,14 @@
 
     <artifactId>jdrivesync</artifactId>
     <groupId>jdrivesync</groupId>
-    <version>0.2.3-SNAPSHOT</version>
+    <version>0.2.3</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.http.version>1.19.0</project.http.version>
         <project.oauth.version>1.19.0</project.oauth.version>
         <project.google-drive-service.version>v2-rev168-1.19.0</project.google-drive-service.version>
+        <powermock.version>1.6.2</powermock.version>
         <github.account>siom79</github.account>
         <github.project>jdrivesync</github.project>
     </properties>
@@ -65,9 +66,15 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>1.9.5</version>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-module-junit4</artifactId>
+            <version>${powermock.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-api-mockito</artifactId>
+            <version>${powermock.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
