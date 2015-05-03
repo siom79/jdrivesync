@@ -46,12 +46,6 @@ jdrivesync can create an HTML file that reports the actions taken in the last ru
 jdrivesync just uses the last modification timestamp and/or the MD5 checksum to determine whether a file has changed.
 It does not utilize any application-specific metadata. Hence you can start working with an already existing backup that has been created by another client.
 
-##Limitations##
-
-Unfortunately the current version of the Google Drive API has a server-side bug regarding resumable uploades that take longer than the expiration time of
-the access token (see for example [here](http://stackoverflow.com/questions/23789284/resumable-upload-error-401) or [here](https://code.google.com/p/google-api-python-client/issues/detail?id=231)).
-Until this bug is fixed, you can use the command line option --max-file-size to exclude files that are too large to be uploaded within one hour. 
-
 ##Usage##
 
 The following options can be passed on the command line:
