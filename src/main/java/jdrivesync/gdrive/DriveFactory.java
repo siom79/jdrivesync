@@ -11,7 +11,7 @@ public class DriveFactory {
     private static Drive drive;
     private static JsonFactory jsonFactory;
 
-    public static Drive getDrive(Credential credential) {
+    public Drive getDrive(Credential credential) {
         if(drive == null) {
             HttpTransport httpTransport = new NetHttpTransport();
             drive = new Drive.Builder(httpTransport, getJsonFactory(), credential).setApplicationName("JDriveSync").build();

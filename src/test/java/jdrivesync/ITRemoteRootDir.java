@@ -27,7 +27,7 @@ public class ITRemoteRootDir extends BaseClass {
 
     @Before
     public void before() throws IOException {
-        super.beforeEachTest(TESTDATA);
+        super.beforeEachTest(TESTDATA, driveFactory);
         createTestData(TESTDATA);
     }
 

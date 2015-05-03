@@ -25,7 +25,7 @@ public class ITUpdateMetadata extends BaseClass {
 
 	@Before
 	public void before() throws IOException {
-		super.beforeEachTest(TEST_DATA_UP);
+		super.beforeEachTest(TEST_DATA_UP, driveFactory);
 		createTestData(TEST_DATA_UP);
 	}
 
