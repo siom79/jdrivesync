@@ -1,15 +1,14 @@
 package jdrivesync;
 
+import jdrivesync.constants.Constants;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.Random;
 
@@ -26,14 +25,14 @@ public class ITBigFileUpSync extends BaseClass {
 
 	@Before
 	public void before() throws IOException {
-		super.beforeEachTest(TEST_DATA_UP);
+		super.beforeEachTest(TEST_DATA_UP, driveFactory);
 		createTestData(TEST_DATA_UP);
 	}
 
 	private void createTestData(String name) throws IOException {
 		deleteDirectorySubtree(Paths.get(basePathTestData(), name));
 		Files.createDirectory(Paths.get(basePathTestData(), name));
-		byte[] bytes = new byte[1024 * 1024];
+		byte[] bytes = new byte[3 * Constants.MB];
 		Random random = new Random();
 		random.nextBytes(bytes);
 		Files.write(Paths.get(basePathTestData(), name, "bigFile.bin"), bytes, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
@@ -41,6 +40,7 @@ public class ITBigFileUpSync extends BaseClass {
 
 	@Test
 	public void testSimpleSync() {
+		options.setHttpChunkSizeInBytes(1 * Constants.MB);
 		App app = new App();
 		app.sync(options);
 		sleep();

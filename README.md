@@ -25,10 +25,10 @@ folder on your Google Drive is possible (e.g. push all your files under /home/us
 ###Scalability###
 In contrast to other clients jdrivesync does not download the complete list of files before starting the synchronization. Instead each local directory
 is synchronized with its corresponding directory on Google Drive. This approach scales better for large sets of files (>10.000 files) in terms of memory
-consumption and download rate.
+consumption and initial download rate. Beyond that it also means that after restarting the tool no download of the complete file list is necessary.
 
 ###Multi-User###
-The credentials can be passed to the application, hence you can use jdrivesync with more than on user account.
+The credentials can be passed to the application, hence you can use jdrivesync with more than one user account.
 
 ###Partial Sync###
 While the Google client always synchronizes the complete folder hierarchy, jdrivesync allows you to specify a specific local and remote directory
@@ -46,62 +46,40 @@ jdrivesync can create an HTML file that reports the actions taken in the last ru
 jdrivesync just uses the last modification timestamp and/or the MD5 checksum to determine whether a file has changed.
 It does not utilize any application-specific metadata. Hence you can start working with an already existing backup that has been created by another client.
 
-##Limitations##
-
-Unfortunately the current version of the Google Drive API has a server-side bug regarding resumable uploades that take longer than the expiration time of
-the access token (see for example [here](http://stackoverflow.com/questions/23789284/resumable-upload-error-401) or [here](https://code.google.com/p/google-api-python-client/issues/detail?id=231)).
-Until this bug is fixed, you can use the command line option --max-file-size to exclude files that are too large to be uploaded within one hour. 
-
 ##Usage##
 
 The following options can be passed on the command line:
 
     -h,--help
-        Prints this help.
-    
-    
+            Prints this help.
     -l,--local-dir <local-dir>
-        Provides the local directory that should be synchronized.
-    
-    
+            Provides the local directory that should be synchronized.
     -r,--remote-dir <remote-dir>
-        Provides the remote directory that should be synchronized.
-    
-    
+            Provides the remote directory that should be synchronized.
     -a,--authentication-file <auth-file>
-        Use given authentication file instead of default one (.jdrivesync).
-    
-    
+            Use given authentication file instead of default one (.jdrivesync).
     --dry-run
-        Simulates all data manipulating operations (dry run).
-    
-    
+            Simulates all data manipulating operations (dry run).
     --delete
-        Deletes all files instead of moving them to trash.
-    
-    
+            Deletes all files instead of moving them to trash.
     -c,--checksum
-        Use MD5 checksum instead of last modification timestamp of file.
-    
-    
+            Use MD5 checksum instead of last modification timestamp of file.
     -i,--ignore-file <ignore-file>
-        Provides a file with newline separated file names and/or paths that should be ignored.
-    
-    
+            Provides a file with newline separated file and/or path name patterns that should be ignored.
     -u,--up
-        Synchronization is performed from the local to the remote site (default).
-    
-    
+            Synchronization is performed from the local to the remote site (default).
     -d,--down
-        Synchronization is performed from the remote to the local site.
-    
-    
+            Synchronization is performed from the remote to the local site.
     --html-report
-        Creates an HTML report of the synchronization.
-    
-    
-    -m,-max-file-size <maxFileSize>
-        Provides the maximum file size in MB.
+            Creates an HTML report of the synchronization.
+    -m,--max-file-size <maxFileSize>
+            Provides the maximum file size in MB.
+    --http-chunk-size
+            The size of a chunk in MB used for chunked uploads (default: 10MB).
+    --network-number-of-retries
+            The number of times how often a request is retried (default: 3).
+    --network-sleep-between-retries
+            The number of seconds to sleep between retries (default: 10).
 
 Hence a simple upload synchronization of your file collection under /home/user/documents will be done with:
 
