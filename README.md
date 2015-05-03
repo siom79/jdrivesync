@@ -25,10 +25,10 @@ folder on your Google Drive is possible (e.g. push all your files under /home/us
 ###Scalability###
 In contrast to other clients jdrivesync does not download the complete list of files before starting the synchronization. Instead each local directory
 is synchronized with its corresponding directory on Google Drive. This approach scales better for large sets of files (>10.000 files) in terms of memory
-consumption and download rate.
+consumption and initial download rate. Beyond that it also means that after restarting the tool no download of the complete file list is necessary.
 
 ###Multi-User###
-The credentials can be passed to the application, hence you can use jdrivesync with more than on user account.
+The credentials can be passed to the application, hence you can use jdrivesync with more than one user account.
 
 ###Partial Sync###
 While the Google client always synchronizes the complete folder hierarchy, jdrivesync allows you to specify a specific local and remote directory

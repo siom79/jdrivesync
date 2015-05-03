@@ -1,5 +1,7 @@
 package jdrivesync.cli;
 
+import jdrivesync.constants.Constants;
+
 import java.io.File;
 import java.util.Arrays;
 import java.util.Optional;
@@ -19,6 +21,7 @@ public class Options {
     private FileNamePatterns encryptFiles = FileNamePatterns.create(Arrays.asList(""));
     private String encryptPassword = "";
     private long lastModificationDateThreshold = 1500;
+    private long httpChunkSizeInBytes = 10 * Constants.MB;
 
     public void setLocalRootDir(Optional<File> localRootDir) {
         this.localRootDir = localRootDir;
@@ -134,5 +137,13 @@ public class Options {
 
     public long getLastModificationDateThreshold() {
         return lastModificationDateThreshold;
+    }
+
+    public void setHttpChunkSizeInBytes(long httpChunkSize) {
+        this.httpChunkSizeInBytes = httpChunkSize;
+    }
+
+    public long getHttpChunkSizeInBytes() {
+        return httpChunkSizeInBytes;
     }
 }

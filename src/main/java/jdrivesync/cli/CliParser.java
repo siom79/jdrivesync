@@ -26,7 +26,8 @@ public class CliParser {
         SyncUp("-u", "--up", "Synchronization is performed from the local to the remote site (default)."),
         SyncDown("-d", "--down", "Synchronization is performed from the remote to the local site."),
         HtmlReport(null, "--html-report", "Creates an HTML report of the synchronization."),
-        MaxFileSize("-m", "--max-file-size", "Provides the maximum file size in MB.", "<maxFileSize>");
+        MaxFileSize("-m", "--max-file-size", "Provides the maximum file size in MB.", "<maxFileSize>"),
+        HttpChunkSize(null, "--http-chunk-size", "The size of a chunk in MB used for chunked uploads.");
         //Password("-p", "--password", "The password used to encrypt/decrypt the files.", "<password>"),
         //EncryptFile("-e", "--encrypt-files", "Provides a file with newline separated file and/or path name patterns that should be encrypted.", "<encrypt-file>");
 
@@ -128,6 +129,20 @@ public class CliParser {
                     throw new JDriveSyncException(JDriveSyncException.Reason.InvalidCliParameter, "Argument for option '" + arg + "' is not an integer.");
                 }
                 options.setMaxFileSize(Optional.of(maxFileSizeInteger * Constants.MB));
+            } else if (argument == Argument.HttpChunkSize) {
+                String option = getOptionWithArgument(arg, sae);
+                long httpChunkSizeMB;
+                try {
+                    httpChunkSizeMB = Long.valueOf(option);
+                } catch (NumberFormatException e) {
+                    throw new JDriveSyncException(JDriveSyncException.Reason.InvalidCliParameter, "Argument for option '" + arg + "' is not an integer.");
+                }
+				long httpChunkSizeBytes = httpChunkSizeMB * Constants.MB;
+				httpChunkSizeBytes = (httpChunkSizeBytes / 256) * 256; // chunk size must be multiple of 256
+				if (httpChunkSizeMB < 0) {
+					throw new JDriveSyncException(JDriveSyncException.Reason.InvalidCliParameter, "Argument for option '" + arg + "' is a negative integer.");
+				}
+				options.setHttpChunkSizeInBytes(httpChunkSizeBytes);
             } else {
                 throw new JDriveSyncException(JDriveSyncException.Reason.InvalidCliParameter, "The parameter '" + arg + "' is not valid.");
             }
