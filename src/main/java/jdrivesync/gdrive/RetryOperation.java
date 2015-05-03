@@ -29,6 +29,14 @@ public class RetryOperation {
             } catch (IOException e) {
                 LOGGER.log(Level.FINE, "Network operation failed for the " + numberOfAttempts + ". time.", e);
             }
+			if (!successful) {
+				try {
+					long sleepMillis = (numberOfAttempts * numberOfAttempts) * options.getNetworkSleepBetweenAttempts();
+					LOGGER.log(Level.FINE, "Sleeping for " + sleepMillis + ".");
+					Thread.sleep(sleepMillis);
+				} catch (InterruptedException ignored) {
+				}
+			}
         }
         if (!successful) {
             throw new JDriveSyncException(JDriveSyncException.Reason.IOException, "Failed to execute network operation for " + numberOfAttempts + ". time(s).");

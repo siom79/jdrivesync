@@ -57,51 +57,35 @@ Until this bug is fixed, you can use the command line option --max-file-size to 
 The following options can be passed on the command line:
 
     -h,--help
-        Prints this help.
-    
-    
+            Prints this help.
     -l,--local-dir <local-dir>
-        Provides the local directory that should be synchronized.
-    
-    
+            Provides the local directory that should be synchronized.
     -r,--remote-dir <remote-dir>
-        Provides the remote directory that should be synchronized.
-    
-    
+            Provides the remote directory that should be synchronized.
     -a,--authentication-file <auth-file>
-        Use given authentication file instead of default one (.jdrivesync).
-    
-    
+            Use given authentication file instead of default one (.jdrivesync).
     --dry-run
-        Simulates all data manipulating operations (dry run).
-    
-    
+            Simulates all data manipulating operations (dry run).
     --delete
-        Deletes all files instead of moving them to trash.
-    
-    
+            Deletes all files instead of moving them to trash.
     -c,--checksum
-        Use MD5 checksum instead of last modification timestamp of file.
-    
-    
+            Use MD5 checksum instead of last modification timestamp of file.
     -i,--ignore-file <ignore-file>
-        Provides a file with newline separated file names and/or paths that should be ignored.
-    
-    
+            Provides a file with newline separated file and/or path name patterns that should be ignored.
     -u,--up
-        Synchronization is performed from the local to the remote site (default).
-    
-    
+            Synchronization is performed from the local to the remote site (default).
     -d,--down
-        Synchronization is performed from the remote to the local site.
-    
-    
+            Synchronization is performed from the remote to the local site.
     --html-report
-        Creates an HTML report of the synchronization.
-    
-    
-    -m,-max-file-size <maxFileSize>
-        Provides the maximum file size in MB.
+            Creates an HTML report of the synchronization.
+    -m,--max-file-size <maxFileSize>
+            Provides the maximum file size in MB.
+    --http-chunk-size
+            The size of a chunk in MB used for chunked uploads (default: 10MB).
+    --network-number-of-retries
+            The number of times how often a request is retried (default: 3).
+    --network-sleep-between-retries
+            The number of seconds to sleep between retries (default: 10).
 
 Hence a simple upload synchronization of your file collection under /home/user/documents will be done with:
 
