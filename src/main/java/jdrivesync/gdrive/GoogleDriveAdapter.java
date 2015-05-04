@@ -156,7 +156,6 @@ public class GoogleDriveAdapter {
 
 	public InputStream downloadFile(SyncItem syncItem) {
 		Drive drive = driveFactory.getDrive(this.credential);
-		InputStream inputStream = null;
 		try {
 			File remoteFile = syncItem.getRemoteFile().get();
 			HttpRequest httpRequest = drive.getRequestFactory().buildGetRequest(new GenericUrl(remoteFile.getDownloadUrl()));
@@ -168,7 +167,7 @@ public class GoogleDriveAdapter {
 		} catch (IOException e) {
 			throw new JDriveSyncException(JDriveSyncException.Reason.IOException, "Failed to delete file: " + e.getMessage(), e);
 		}
-		return inputStream;
+		return new ByteArrayInputStream(new byte[0]);
 	}
 
 	public void updateFile(SyncItem syncItem) {
