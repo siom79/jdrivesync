@@ -56,12 +56,18 @@ public class ITDryRun extends BaseClass {
 
 	@Test
 	public void testBDownload() throws IOException {
+		options.setSyncDirection(SyncDirection.Up);
+		options.setDryRun(false);
+		App app = new App();
+		app.sync(options);
+		sleep();
+		assertThat(googleDriveAdapter.listAll().size(), is(3));
 		Path path = Paths.get(basePathTestData(), TEST_DATA_UP);
 		deleteDirectorySubtree(path);
 		Files.createDirectory(path);
 		options.setSyncDirection(SyncDirection.Down);
 		options.setDryRun(true);
-		App app = new App();
+		app = new App();
 		app.sync(options);
 		sleep();
 		assertThat(Files.list(path).count(), is(0L));

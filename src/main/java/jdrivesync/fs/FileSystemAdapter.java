@@ -180,7 +180,7 @@ public class FileSystemAdapter {
 	}
 
 	private void copyStreamToFile(InputStream inputStream, java.io.File file) throws IOException {
-		if (options.isDryRun()) {
+		if (!options.isDryRun()) {
 			byte[] buffer = new byte[1024];
 			try (FileOutputStream fos = new FileOutputStream(file)) {
 				int read = inputStream.read(buffer, 0, buffer.length);
