@@ -272,6 +272,14 @@ public class GoogleDriveAdapter {
 		}
 	}
 
+	public boolean fileNameValid(File file) {
+		String title = file.getTitle();
+		if (title == null || title.contains("/") || title.contains("\\")) {
+			return false;
+		}
+		return true;
+	}
+
 	private static class ChunkedHttpContent implements HttpContent {
 		private final String mimeType;
 		private final java.io.File file;

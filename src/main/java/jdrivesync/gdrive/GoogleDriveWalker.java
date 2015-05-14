@@ -26,12 +26,12 @@ public class GoogleDriveWalker implements Walker {
     }
 
     @Override
-    public void walk(WalkerVisitor fileSystemVisitor) {
+    public void walk(WalkerVisitor walkerVisitor) {
         File remoteRootFile = googleDriveAdapter.getFile("root");
         remoteRootFile = getRemoteRootDir(remoteRootFile);
         java.io.File localRootFile = options.getLocalRootDir().get();
         SyncDirectory rootDirectory = new SyncDirectory(Optional.of(localRootFile), Optional.of(remoteRootFile), "/", Optional.empty());
-        walkInternal(rootDirectory, googleDriveAdapter, fileSystemVisitor);
+        walkInternal(rootDirectory, googleDriveAdapter, walkerVisitor);
     }
 
     private File getRemoteRootDir(File remoteRootFile) {
@@ -69,18 +69,20 @@ public class GoogleDriveWalker implements Walker {
             File remoteFile = syncDirectory.getRemoteFile().get();
             List<File> remoteChildren = googleDriveAdapter.listChildren(remoteFile.getId());
             for (File file : remoteChildren) {
-                String relativePath = toRelativePath(file, syncDirectory);
-                if (googleDriveAdapter.isDirectory(file)) {
-                    if (!fileShouldBeIgnored(relativePath, true, file)) {
-                        SyncDirectory subSyncDirectory = new SyncDirectory(Optional.empty(), Optional.of(file), relativePath, Optional.of(syncDirectory));
-                        syncDirectory.addChild(subSyncDirectory);
-                    }
-                } else {
-                    if (!fileShouldBeIgnored(relativePath, false, file)) {
-                        SyncFile syncFile = new SyncFile(Optional.empty(), Optional.of(file), relativePath, Optional.of(syncDirectory));
-                        syncDirectory.addChild(syncFile);
-                    }
-                }
+                if (!googleDriveAdapter.isGoogleAppsDocument(file) && googleDriveAdapter.fileNameValid(file)) {
+					String relativePath = toRelativePath(file, syncDirectory);
+					if (googleDriveAdapter.isDirectory(file)) {
+						if (!fileShouldBeIgnored(relativePath, true, file)) {
+							SyncDirectory subSyncDirectory = new SyncDirectory(Optional.empty(), Optional.of(file), relativePath, Optional.of(syncDirectory));
+							syncDirectory.addChild(subSyncDirectory);
+						}
+					} else {
+						if (!fileShouldBeIgnored(relativePath, false, file)) {
+							SyncFile syncFile = new SyncFile(Optional.empty(), Optional.of(file), relativePath, Optional.of(syncDirectory));
+							syncDirectory.addChild(syncFile);
+						}
+					}
+				}
             }
             WalkerVisitor.WalkerVisitorResult result = visitor.visitDirectory(syncDirectory);
             if (result == WalkerVisitor.WalkerVisitorResult.Continue) {

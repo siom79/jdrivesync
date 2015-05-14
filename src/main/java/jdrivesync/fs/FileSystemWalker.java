@@ -6,6 +6,7 @@ import jdrivesync.model.SyncFile;
 import jdrivesync.model.SyncItem;
 import jdrivesync.report.ReportEntry;
 import jdrivesync.report.ReportFactory;
+import jdrivesync.util.FileUtil;
 import jdrivesync.walker.Walker;
 import jdrivesync.walker.WalkerVisitor;
 
@@ -21,8 +22,8 @@ public class FileSystemWalker implements Walker {
     private final Options options;
     private FileSystemAdapter fileSystemAdapter;
 
-    public FileSystemWalker(File startDirectory, Options options, FileSystemAdapter fileSystemAdapter) {
-        this.startDirectory = startDirectory;
+    public FileSystemWalker(Options options, FileSystemAdapter fileSystemAdapter) {
+        this.startDirectory = options.getLocalRootDir().get();
         this.options = options;
         this.fileSystemAdapter = fileSystemAdapter;
     }
@@ -40,7 +41,7 @@ public class FileSystemWalker implements Walker {
                     File[] files = fileSystemAdapter.listFiles(directory);
                     if (files != null) {
                         for (File file : files) {
-                            String relativePath = toRelativePath(file);
+                            String relativePath = FileUtil.toRelativePath(file, options);
                             if (fileSystemAdapter.isDirectory(file)) {
                                 if (!fileShouldBeIgnored(relativePath, true, file)) {
                                     SyncDirectory subSyncDirectory = new SyncDirectory(Optional.of(file), Optional.empty(), relativePath, Optional.of(syncDirectory));
@@ -67,15 +68,15 @@ public class FileSystemWalker implements Walker {
                         }
                     } else {
                         LOGGER.log(Level.FINE, "Skipping directory '" + directory.getAbsolutePath() + "' because list of files is null/zero.");
-                        ReportFactory.getInstance(options).log(new ReportEntry(toRelativePath(directory), ReportEntry.Status.Synchronized, ReportEntry.Action.Skipped));
+                        ReportFactory.getInstance(options).log(new ReportEntry(FileUtil.toRelativePath(directory, options), ReportEntry.Status.Synchronized, ReportEntry.Action.Skipped));
                     }
                 } else {
                     LOGGER.log(Level.FINE, "Skipping directory '" + directory.getAbsolutePath() + "' because read permission is missing.");
-                    ReportFactory.getInstance(options).log(new ReportEntry(toRelativePath(directory), ReportEntry.Status.Error, ReportEntry.Action.Skipped, "Missing read permission."));
+                    ReportFactory.getInstance(options).log(new ReportEntry(FileUtil.toRelativePath(directory, options), ReportEntry.Status.Error, ReportEntry.Action.Skipped, "Missing read permission."));
                 }
             } else {
                 LOGGER.log(Level.FINE, "Skipping directory '" + directory.getAbsolutePath() + "' because it does not exist.");
-                ReportFactory.getInstance(options).log(new ReportEntry(toRelativePath(directory), ReportEntry.Status.Error, ReportEntry.Action.Skipped, "Does not exist."));
+                ReportFactory.getInstance(options).log(new ReportEntry(FileUtil.toRelativePath(directory, options), ReportEntry.Status.Error, ReportEntry.Action.Skipped, "Does not exist."));
             }
         } else {
             LOGGER.log(Level.FINE, "Skipping directory '" + syncDirectory.getPath() + "' because no local directory is set.");
@@ -98,19 +99,5 @@ public class FileSystemWalker implements Walker {
             }
         }
         return matches;
-    }
-
-    private String toRelativePath(File file) {
-        String absolutePathFile = file.getAbsolutePath();
-        String absolutePathStartDir = this.startDirectory.getAbsolutePath();
-        String relativePath = "/";
-        if (absolutePathFile.length() > absolutePathStartDir.length()) {
-            relativePath = absolutePathFile.substring(absolutePathStartDir.length(), absolutePathFile.length());
-            relativePath = relativePath.replace('\\', '/');
-            if (!relativePath.startsWith("/")) {
-                relativePath = "/" + relativePath;
-            }
-        }
-        return relativePath;
     }
 }
