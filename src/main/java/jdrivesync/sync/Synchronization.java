@@ -46,7 +46,7 @@ public class Synchronization {
 	}
 
 	public void syncUp(final Options options) {
-		FileSystemWalker fileSystemWalker = new FileSystemWalker(options.getLocalRootDir().get(), options, fileSystemAdapter);
+		FileSystemWalker fileSystemWalker = new FileSystemWalker(options, fileSystemAdapter);
 		fileSystemWalker.walk(new WalkerVisitor() {
 			@Override
 			public WalkerVisitorResult visitDirectory(SyncDirectory syncDirectory) {
@@ -364,9 +364,14 @@ public class Synchronization {
 								}
 							} else {
 								LOGGER.log(Level.FINE, "Downloading file '" + syncItem.getPath() + "'.");
-								InputStream stream = googleDriveAdapter.downloadFile(syncItem);
-								fileSystemAdapter.storeFile(stream, syncItem);
-								ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created));
+								try {
+									InputStream stream = googleDriveAdapter.downloadFile(syncItem);
+									fileSystemAdapter.storeFile(stream, syncItem);
+									ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created));
+								} catch (Exception e) {
+									LOGGER.log(Level.SEVERE, "Failed to store file '" + syncItem.getPath() + "': " + e.getMessage());
+									ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped));
+								}
 							}
 						}
 					}
@@ -429,9 +434,14 @@ public class Synchronization {
 							throw new JDriveSyncException(JDriveSyncException.Reason.IOException, "Could not delete local directory '" + file.getAbsolutePath() + "'.");
 						}
 						LOGGER.log(Level.FINE, "Downloading file '" + syncItem.getPath() + "'.");
-						InputStream stream = googleDriveAdapter.downloadFile(syncItem);
-						fileSystemAdapter.storeFile(stream, syncItem);
-						ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created));
+						try {
+							InputStream stream = googleDriveAdapter.downloadFile(syncItem);
+							fileSystemAdapter.storeFile(stream, syncItem);
+							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created));
+						} catch (Exception e) {
+							LOGGER.log(Level.SEVERE, "Failed to store file '" + syncItem.getPath() + "': " + e.getMessage());
+							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped));
+						}
 					} else {
 						if (options.isUseChecksum()) {
 							performChecksumCheck(file, syncItem, remoteFile, false);
@@ -490,9 +500,14 @@ public class Synchronization {
 					}
 				} else {
 					LOGGER.log(Level.FINE, "Downloading file '" + syncItem.getPath() + "' because MD5 checksums are not equal (local: " + localFileMd5Checksum + ", remote: " + remoteFileMd5Checksum + ").");
-					InputStream stream = googleDriveAdapter.downloadFile(syncItem);
-					fileSystemAdapter.storeFile(stream, syncItem);
-					ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Updated));
+					try {
+						InputStream stream = googleDriveAdapter.downloadFile(syncItem);
+						fileSystemAdapter.storeFile(stream, syncItem);
+						ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Updated));
+					} catch (Exception e) {
+						LOGGER.log(Level.SEVERE, "Failed to store file '" + syncItem.getPath() + "': " + e.getMessage());
+						ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped));
+					}
 				}
 			}
 		});

@@ -23,6 +23,7 @@ public class Options {
     private String encryptPassword = "";
     private long lastModificationDateThreshold = 1500;
     private long httpChunkSizeInBytes = 10 * Constants.MB;
+    private boolean verbose = false;
 
     public long getNetworkSleepBetweenAttempts() {
         return networkSleepBetweenAttempts;
@@ -167,5 +168,13 @@ public class Options {
 
     public long getHttpChunkSizeInBytes() {
         return httpChunkSizeInBytes;
+    }
+
+    public void setVerbose(boolean verbose) {
+        this.verbose = verbose;
+    }
+
+    public boolean isVerbose() {
+        return verbose;
     }
 }

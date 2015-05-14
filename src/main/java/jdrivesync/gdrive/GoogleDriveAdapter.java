@@ -156,19 +156,23 @@ public class GoogleDriveAdapter {
 
 	public InputStream downloadFile(SyncItem syncItem) {
 		Drive drive = driveFactory.getDrive(this.credential);
-		InputStream inputStream = null;
 		try {
 			File remoteFile = syncItem.getRemoteFile().get();
-			HttpRequest httpRequest = drive.getRequestFactory().buildGetRequest(new GenericUrl(remoteFile.getDownloadUrl()));
-			LOGGER.log(Level.FINE, "Downloading file " + remoteFile.getId() + ".");
-			if (!options.isDryRun()) {
-				HttpResponse httpResponse = executeWithRetry(options, () -> httpRequest.execute());
-				return httpResponse.getContent();
+			String downloadUrl = remoteFile.getDownloadUrl();
+			if (downloadUrl != null) {
+				HttpRequest httpRequest = drive.getRequestFactory().buildGetRequest(new GenericUrl(downloadUrl));
+				LOGGER.log(Level.FINE, "Downloading file " + remoteFile.getId() + ".");
+				if (!options.isDryRun()) {
+					HttpResponse httpResponse = executeWithRetry(options, () -> httpRequest.execute());
+					return httpResponse.getContent();
+				}
+			} else {
+				LOGGER.log(Level.SEVERE, "No download URL for file " + remoteFile);
 			}
-		} catch (IOException e) {
-			throw new JDriveSyncException(JDriveSyncException.Reason.IOException, "Failed to delete file: " + e.getMessage(), e);
+		} catch (Exception e) {
+			throw new JDriveSyncException(JDriveSyncException.Reason.IOException, "Failed to download file: " + e.getMessage(), e);
 		}
-		return inputStream;
+		return new ByteArrayInputStream(new byte[0]);
 	}
 
 	public void updateFile(SyncItem syncItem) {
@@ -271,6 +275,14 @@ public class GoogleDriveAdapter {
 				}
 			}
 		}
+	}
+
+	public boolean fileNameValid(File file) {
+		String title = file.getTitle();
+		if (title == null || title.contains("/") || title.contains("\\")) {
+			return false;
+		}
+		return true;
 	}
 
 	private static class ChunkedHttpContent implements HttpContent {

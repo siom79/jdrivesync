@@ -6,8 +6,11 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class HtmlReport implements Report {
+    private static final Logger LOGGER = Logger.getLogger(HtmlReport.class.getName());
     private Date reportDate = new Date();
     private File file = null;
     private RandomAccessFile randomAccessFile = null;
@@ -60,6 +63,7 @@ public class HtmlReport implements Report {
         int footerLength = footer.getBytes(Charset.forName("UTF-8")).length;
         try {
             randomAccessFile.seek(randomAccessFile.length() - footerLength);
+			LOGGER.log(Level.INFO, statusEntry(reportEntry) + " " + reportEntry.getAction() + " " + reportEntry.getRelativePath());
             String entryPlusFooter = reportEntryToString(reportEntry) + "\n" + footer;
             randomAccessFile.write(entryPlusFooter.getBytes("UTF-8"));
         } catch (IOException e) {
@@ -70,14 +74,14 @@ public class HtmlReport implements Report {
     private String reportEntryToString(ReportEntry reportEntry) {
         StringBuilder sb = new StringBuilder();
         sb.append("<tr>\n");
-        sb.append("<td>" + encodeHTML(reportEntry.getRelativePath()) + "</td>\n");
-        sb.append("<td>" + encodeHTML(statusEntry(reportEntry)) + "</td>\n");
-        sb.append("<td>" + reportEntry.getAction() + "</td>\n");
+        sb.append("<td>").append(encodeHTML(reportEntry.getRelativePath())).append("</td>\n");
+        sb.append("<td>").append(encodeHTML(statusEntry(reportEntry))).append("</td>\n");
+        sb.append("<td>").append(reportEntry.getAction()).append("</td>\n");
         sb.append("</tr>\n");
         return sb.toString();
     }
 
-    private String statusEntry(ReportEntry reportEntry) {
+    public static String statusEntry(ReportEntry reportEntry) {
         StringBuilder sb = new StringBuilder();
         if(reportEntry.getStatus() == ReportEntry.Status.Error) {
             sb.append(reportEntry.getStatus());

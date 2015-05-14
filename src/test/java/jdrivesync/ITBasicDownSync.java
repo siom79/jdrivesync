@@ -40,6 +40,7 @@ public class ITBasicDownSync extends BaseClass {
         Files.write(Paths.get(basePathTestData(), name, "test1.txt"), Arrays.asList("test1"), Charset.defaultCharset(), StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
         Files.createDirectory(Paths.get(basePathTestData(), name, "folder"));
         Files.write(Paths.get(basePathTestData(), name, "folder", "test2.txt"), Arrays.asList("test2"), Charset.defaultCharset(), StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+        Files.write(Paths.get(basePathTestData(), name, "folder", "test with whitespace.txt"), Arrays.asList("test2"), Charset.defaultCharset(), StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
     }
 
     @Test
@@ -47,7 +48,7 @@ public class ITBasicDownSync extends BaseClass {
         App app = new App();
         app.sync(options);
         sleep();
-        assertThat(googleDriveAdapter.listAll().size(), is(3));
+        assertThat(googleDriveAdapter.listAll().size(), is(4));
         options.setSyncDirection(SyncDirection.Down);
         Path testDataDown = Paths.get(basePathTestData(), TEST_DATA_DOWN);
         if(!Files.exists(testDataDown)) {
@@ -65,7 +66,7 @@ public class ITBasicDownSync extends BaseClass {
         App app = new App();
         app.sync(options);
         sleep();
-        assertThat(googleDriveAdapter.listAll().size(), is(3));
+        assertThat(googleDriveAdapter.listAll().size(), is(4));
         options.setSyncDirection(SyncDirection.Down);
         app.sync(options);
         assertThat(Files.exists(Paths.get(basePathTestData(), TEST_DATA_UP, "test1.txt")), is(true));
@@ -92,7 +93,7 @@ public class ITBasicDownSync extends BaseClass {
         App app = new App();
         app.sync(options);
         sleep();
-        assertThat(googleDriveAdapter.listAll().size(), is(3));
+        assertThat(googleDriveAdapter.listAll().size(), is(4));
         options.setSyncDirection(SyncDirection.Down);
         app.sync(options);
         assertThat(Files.exists(Paths.get(basePathTestData(), TEST_DATA_UP, "test1.txt")), is(true));
@@ -101,7 +102,7 @@ public class ITBasicDownSync extends BaseClass {
         options.setSyncDirection(SyncDirection.Up);
         app.sync(options);
         sleep();
-        assertThat(googleDriveAdapter.listAll().size(), is(3));
+        assertThat(googleDriveAdapter.listAll().size(), is(4));
     }
 
     @Test
@@ -109,7 +110,7 @@ public class ITBasicDownSync extends BaseClass {
         App app = new App();
         app.sync(options);
         sleep();
-        assertThat(googleDriveAdapter.listAll().size(), is(3));
+        assertThat(googleDriveAdapter.listAll().size(), is(4));
         Files.delete(Paths.get(basePathTestData(), TEST_DATA_UP, "test1.txt"));
         options.setSyncDirection(SyncDirection.Down);
         app.sync(options);
@@ -121,7 +122,7 @@ public class ITBasicDownSync extends BaseClass {
         App app = new App();
         app.sync(options);
         sleep();
-        assertThat(googleDriveAdapter.listAll().size(), is(3));
+        assertThat(googleDriveAdapter.listAll().size(), is(4));
         List<File> searchResult = googleDriveAdapter.search(Optional.of("test1.txt"));
         assertThat(searchResult.size(), is(1));
         googleDriveAdapter.deleteFile(searchResult.get(0));
@@ -137,7 +138,7 @@ public class ITBasicDownSync extends BaseClass {
         App app = new App();
         app.sync(options);
         sleep();
-        assertThat(googleDriveAdapter.listAll().size(), is(3));
+        assertThat(googleDriveAdapter.listAll().size(), is(4));
         options.setRemoteRootDir(Optional.of("/folder"));
         options.setLocalRootDir(Optional.of(Paths.get(basePathTestData(), TEST_DATA_UP, "folder").toFile()));
         options.setSyncDirection(SyncDirection.Down);

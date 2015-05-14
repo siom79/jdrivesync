@@ -4,6 +4,8 @@ import jdrivesync.cli.Options;
 import jdrivesync.exception.JDriveSyncException;
 import jdrivesync.model.SyncDirectory;
 import jdrivesync.model.SyncItem;
+import jdrivesync.report.ReportEntry;
+import jdrivesync.report.ReportFactory;
 import jdrivesync.sync.Synchronization;
 
 import java.io.File;
@@ -16,6 +18,8 @@ import java.nio.file.attribute.FileTime;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static jdrivesync.util.FileUtil.toRelativePath;
 
 public class FileSystemAdapter {
 	private static final Logger LOGGER = Logger.getLogger(FileSystemAdapter.class.getName());
@@ -180,12 +184,14 @@ public class FileSystemAdapter {
 	}
 
 	private void copyStreamToFile(InputStream inputStream, java.io.File file) throws IOException {
-		byte[] buffer = new byte[1024];
-		try (FileOutputStream fos = new FileOutputStream(file)) {
-			int read = inputStream.read(buffer, 0, buffer.length);
-			while (read >= 0) {
-				fos.write(buffer, 0, read);
-				read = inputStream.read(buffer, 0, buffer.length);
+		if (!options.isDryRun()) {
+			byte[] buffer = new byte[1024];
+			try (FileOutputStream fos = new FileOutputStream(file)) {
+				int read = inputStream.read(buffer, 0, buffer.length);
+				while (read >= 0) {
+					fos.write(buffer, 0, read);
+					read = inputStream.read(buffer, 0, buffer.length);
+				}
 			}
 		}
 	}
