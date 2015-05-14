@@ -82,7 +82,7 @@ public class App {
 		Logger jdrivesyncLogger = Logger.getLogger("jdrivesync");
 		jdrivesyncLogger.setLevel(options.isVerbose() ? Level.FINE : Level.INFO);
 		Logger googleLogger = Logger.getLogger("com.google.api.client.http");
-		jdrivesyncLogger.setLevel(options.isVerbose() ? Level.FINE : Level.INFO);
+        googleLogger.setLevel(options.isVerbose() ? Level.FINE : Level.INFO);
 	}
 
     void sync(Options options) {
