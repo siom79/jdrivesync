@@ -49,6 +49,7 @@ public class App {
     private void run(String[] args) {
         initLogging();
         Options options = parseCli(args);
+		updateLogging(options);
         sync(options);
         printStatistics();
     }
@@ -77,6 +78,13 @@ public class App {
         }
     }
 
+	private void updateLogging(Options options) {
+		Logger jdrivesyncLogger = Logger.getLogger("jdrivesync");
+		jdrivesyncLogger.setLevel(options.isVerbose() ? Level.FINE : Level.INFO);
+		Logger googleLogger = Logger.getLogger("com.google.api.client.http");
+		jdrivesyncLogger.setLevel(options.isVerbose() ? Level.FINE : Level.INFO);
+	}
+
     void sync(Options options) {
         final GoogleDriveAdapter googleDriveAdapter = GoogleDriveAdapter.initGoogleDriveAdapter(options);
         final FileSystemAdapter fileSystemAdapter = new FileSystemAdapter(options);
@@ -92,7 +100,7 @@ public class App {
         try {
             CliParser cliParser = new CliParser();
             Options options = cliParser.parse(args);
-            LOGGER.log(Level.INFO, "Using options: " + options);
+            LOGGER.log(Level.FINE, "Using options: " + options);
             return options;
         } catch (JDriveSyncException e) {
             if (e.getReason() == JDriveSyncException.Reason.InvalidCliParameter) {

@@ -29,7 +29,8 @@ public class CliParser {
         MaxFileSize("-m", "--max-file-size", "Provides the maximum file size in MB.", "<maxFileSize>"),
         HttpChunkSize(null, "--http-chunk-size", "The size of a chunk in MB used for chunked uploads (default: 10MB)."),
         NetworkNumberOfReries(null, "--network-number-of-retries", "The number of times how often a request is retried (default: 3)."),
-        NetworkSleepBetweenRetries(null, "--network-sleep-between-retries", "The number of seconds to sleep between retries (default: 10).");
+        NetworkSleepBetweenRetries(null, "--network-sleep-between-retries", "The number of seconds to sleep between retries (default: 10)."),
+        Verbose("-v", "--verbose", "Verbose output");
         //Password("-p", "--password", "The password used to encrypt/decrypt the files.", "<password>"),
         //EncryptFile("-e", "--encrypt-files", "Provides a file with newline separated file and/or path name patterns that should be encrypted.", "<encrypt-file>");
 
@@ -164,10 +165,12 @@ public class CliParser {
                 } catch (NumberFormatException e) {
                     throw new JDriveSyncException(JDriveSyncException.Reason.InvalidCliParameter, "Argument for option '" + arg + "' is not an integer.");
                 }
-				if (optionAsInteger <= 0) {
-					throw new JDriveSyncException(JDriveSyncException.Reason.InvalidCliParameter, "Argument for option '" + arg + "' is a negative integer or zero.");
-				}
+                if (optionAsInteger <= 0) {
+                    throw new JDriveSyncException(JDriveSyncException.Reason.InvalidCliParameter, "Argument for option '" + arg + "' is a negative integer or zero.");
+                }
                 options.setNetworkSleepBetweenAttempts(optionAsInteger * 1000);
+            } else if (argument == Argument.Verbose) {
+                options.setVerbose(true);
             } else {
                 throw new JDriveSyncException(JDriveSyncException.Reason.InvalidCliParameter, "The parameter '" + arg + "' is not valid.");
             }

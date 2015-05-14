@@ -61,7 +61,7 @@ The following options can be passed on the command line:
     --dry-run
             Simulates all data manipulating operations (dry run).
     --delete
-            Deletes all files instead of moving them to your trash folder (which is the default).
+            Deletes all files instead of moving them to trash.
     -c,--checksum
             Use MD5 checksum instead of last modification timestamp of file.
     -i,--ignore-file <ignore-file>
@@ -80,6 +80,8 @@ The following options can be passed on the command line:
             The number of times how often a request is retried (default: 3).
     --network-sleep-between-retries
             The number of seconds to sleep between retries (default: 10).
+    -v,--verbose
+            Verbose output
 
 Hence a simple upload synchronization of your file collection under /home/user/documents will be done with:
 
