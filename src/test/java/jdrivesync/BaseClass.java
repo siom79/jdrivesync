@@ -72,7 +72,7 @@ public class BaseClass {
 
     protected void sleep() {
         try {
-            Thread.sleep(3000);
+            Thread.sleep(15000);
         } catch (InterruptedException e) {
             LOGGER.log(Level.WARNING, "Sleeping was interrupted: " + e.getMessage(), e);
         }
