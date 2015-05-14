@@ -364,8 +364,8 @@ public class Synchronization {
 								}
 							} else {
 								LOGGER.log(Level.FINE, "Downloading file '" + syncItem.getPath() + "'.");
-								InputStream stream = googleDriveAdapter.downloadFile(syncItem);
 								try {
+									InputStream stream = googleDriveAdapter.downloadFile(syncItem);
 									fileSystemAdapter.storeFile(stream, syncItem);
 									ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created));
 								} catch (Exception e) {
@@ -434,8 +434,8 @@ public class Synchronization {
 							throw new JDriveSyncException(JDriveSyncException.Reason.IOException, "Could not delete local directory '" + file.getAbsolutePath() + "'.");
 						}
 						LOGGER.log(Level.FINE, "Downloading file '" + syncItem.getPath() + "'.");
-						InputStream stream = googleDriveAdapter.downloadFile(syncItem);
 						try {
+							InputStream stream = googleDriveAdapter.downloadFile(syncItem);
 							fileSystemAdapter.storeFile(stream, syncItem);
 							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created));
 						} catch (Exception e) {
@@ -500,8 +500,8 @@ public class Synchronization {
 					}
 				} else {
 					LOGGER.log(Level.FINE, "Downloading file '" + syncItem.getPath() + "' because MD5 checksums are not equal (local: " + localFileMd5Checksum + ", remote: " + remoteFileMd5Checksum + ").");
-					InputStream stream = googleDriveAdapter.downloadFile(syncItem);
 					try {
+						InputStream stream = googleDriveAdapter.downloadFile(syncItem);
 						fileSystemAdapter.storeFile(stream, syncItem);
 						ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Updated));
 					} catch (Exception e) {
