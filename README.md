@@ -2,7 +2,7 @@
 
 jdrivesync is a simple command line tool that synchronizes a local file system structure to your Google Drive (and back):
 
-    java -jar jdrivesync-0.2.3-jar-with-dependencies.jar -l "/home/siom79"
+    java -jar jdrivesync-0.2.4-jar-with-dependencies.jar -l "/home/siom79"
 
 ##Motivation##
 Having a backup of your documents and pictures at some remote site is valuable. Google Drive
@@ -85,7 +85,7 @@ The following options can be passed on the command line:
 
 Hence a simple upload synchronization of your file collection under /home/user/documents will be done with:
 
-    java -jar jdrivesync-0.2.3-jar-with-dependencies.jar -u -l "/home/user/documents"
+    java -jar jdrivesync-0.2.4-jar-with-dependencies.jar -u -l "/home/user/documents"
 
 When you start jdrivesync for the first time it will print an authentication URL. You will have to point your browser
 to this URL, login with your Google account and grant jdrivesync the requested privileges. After having clicked on
@@ -96,12 +96,12 @@ Now jdrivesync will create a file called .jdrivesync in your current working dir
 As long as jdrivesync will find a valid authentication file in your current working directory, it will use it. When you
 want to use an alternative file, you can specify that on the command line:
 
-     java -jar jdrivesync-0.2.3-jar-with-dependencies.jar -u -l "/home/user/documents" -a ".myfile.properties"
+     java -jar jdrivesync-0.2.4-jar-with-dependencies.jar -u -l "/home/user/documents" -a ".myfile.properties"
 
 You can also exclude certain files from being uploaded/downloaded. Just create a text document that contains file name
 patterns and provide the path to this file using the option -i:
 
-    java -jar jdrivesync-0.2.3-jar-with-dependencies.jar -u -l "/home/user/documents" -i .jdrivesyncignore
+    java -jar jdrivesync-0.2.4-jar-with-dependencies.jar -u -l "/home/user/documents" -i .jdrivesyncignore
     
 The patterns should follow these rules:
 * Blank lines are ignored.
