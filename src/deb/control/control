@@ -1,0 +1,9 @@
+Package: jdrivesync
+Version: 0.2.4
+Section: misc
+Priority: optional
+Architecture: all
+Depends: openjdk-8-jre (>= 8)
+Maintainer: Martin Mois <martin.mois@gmail.com>
+Description: jdrivesync is a simple command line tool that synchronizes a local file system structure to your Google Drive (and back)
+Distribution: development

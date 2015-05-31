@@ -112,6 +112,41 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <artifactId>jdeb</artifactId>
+                <groupId>org.vafer</groupId>
+                <version>1.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jdeb</goal>
+                        </goals>
+                        <configuration>
+                            <dataSet>
+                                <data>
+                                    <src>${project.build.directory}/${project.build.finalName}-jar-with-dependencies.jar</src>
+                                    <dst>${project.artifactId}.jar</dst>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/opt/jdrivesync</prefix>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${basedir}/src/main/resources/jdrivesync.sh</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/opt/jdrivesync</prefix>
+                                        <filemode>755</filemode>
+                                    </mapper>
+                                </data>
+                            </dataSet>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 

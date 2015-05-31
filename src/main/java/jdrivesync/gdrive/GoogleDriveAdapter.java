@@ -335,7 +335,10 @@ public class GoogleDriveAdapter {
 				}
 			}
 			long duration = System.currentTimeMillis() - startMillis;
-			double speed = ((getLength() * 1000) / duration) / 1024;
+			double speed = 0.0;
+			if (duration > 0) {
+				speed = ((getLength() * 1000) / duration) / 1024;
+			}
 			LOGGER.log(Level.FINE, String.format("Writing chunk " + this.currentChunkStart + "-" + this.currentChunkEnd + " took " + duration + "ms (%.2f KB/s).", speed));
 		}
 	}
