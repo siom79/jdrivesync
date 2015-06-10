@@ -131,3 +131,43 @@ The patterns should follow these rules:
 
 ##Downloads##
 The latest version can be downloaded from the [release page](https://github.com/siom79/jdrivesync/releases).
+
+##Development##
+
+If you want to contribute, you can fork the project into your github account, create a feature branch
+and later submit your changes in form of a pull request.
+
+###Coding styles###
+
+Please format your code according to the `Java Conventions` as they are provided by your IDE
+([IntelliJ](https://confluence.jetbrains.com/display/IntelliJIDEA/Code+Style+and+Formatting),
+[Eclipse](http://www.eclipseonetips.com/2009/12/13/automatically-format-and-cleanup-code-every-time-you-save/)) with the following changes:
+* Line length: 180
+* Newline: LF
+
+###Build###
+
+The sources are build using the [JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html) (>= 1.8)
+and [maven](https://maven.apache.org/) (>= 3.2).
+To build jdrivesync from scratch execute these commands:
+
+```
+git clone https://github.com/siom79/jdrivesync.git
+cd jdrivesync
+mvn install
+```
+
+After successful compilation you can execute jdrivesync with this command:
+
+```
+java -jar target/jdrivesync-0.2.4-jar-with-dependencies.jar
+```
+
+The deb package is created with the maven plugin [jdeb](https://github.com/tcurdt/jdeb) during the build and is located in the `target`
+directory.
+
+###Version control###
+
+Version control follows the guidelines known as [gitflow](http://nvie.com/posts/a-successful-git-branching-model/). This means
+basically that the master branch is always in a releasable state and that all work is done on feature branches that
+are later on merged to the `develop` branch.
