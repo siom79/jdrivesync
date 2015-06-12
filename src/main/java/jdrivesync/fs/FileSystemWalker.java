@@ -1,6 +1,7 @@
 package jdrivesync.fs;
 
 import jdrivesync.cli.Options;
+import jdrivesync.logging.LoggerFactory;
 import jdrivesync.model.SyncDirectory;
 import jdrivesync.model.SyncFile;
 import jdrivesync.model.SyncItem;
@@ -17,7 +18,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class FileSystemWalker implements Walker {
-    private static final Logger LOGGER = Logger.getLogger(FileSystemWalker.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger();
     private final File startDirectory;
     private final Options options;
     private FileSystemAdapter fileSystemAdapter;

@@ -9,6 +9,7 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import jdrivesync.cli.Options;
 import jdrivesync.exception.JDriveSyncException;
 import jdrivesync.gdrive.oauth.OAuth2ClientCredentials;
+import jdrivesync.logging.LoggerFactory;
 
 import java.io.File;
 import java.io.FileReader;
@@ -23,7 +24,7 @@ public class CredentialStore {
     public static final String FILE_NAME = ".jdrivesync";
     public static final String PROP_ACCESS_TOKEN = "accessToken";
     public static final String PROP_REFRESH_TOKEN = "refreshToken";
-    private static final Logger LOGGER = Logger.getLogger(CredentialStore.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger();
     private final Options options;
     private Optional<Credential> credential = Optional.empty();
 

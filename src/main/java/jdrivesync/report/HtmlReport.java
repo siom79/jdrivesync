@@ -1,6 +1,7 @@
 package jdrivesync.report;
 
 import jdrivesync.exception.JDriveSyncException;
+import jdrivesync.logging.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -10,7 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class HtmlReport implements Report {
-    private static final Logger LOGGER = Logger.getLogger(HtmlReport.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger();
     private Date reportDate = new Date();
     private File file = null;
     private RandomAccessFile randomAccessFile = null;

@@ -14,6 +14,7 @@ import jdrivesync.constants.Constants;
 import jdrivesync.encryption.Encryption;
 import jdrivesync.exception.JDriveSyncException;
 import jdrivesync.gdrive.oauth.Authorize;
+import jdrivesync.logging.LoggerFactory;
 import jdrivesync.model.SyncDirectory;
 import jdrivesync.model.SyncFile;
 import jdrivesync.model.SyncItem;
@@ -30,7 +31,7 @@ import static jdrivesync.gdrive.RetryOperation.executeWithRetry;
 public class GoogleDriveAdapter {
 	public static final String MIME_TYPE_FOLDER = "application/vnd.google-apps.folder";
 	public static final String MIME_TYPE_UNKNOWN = "application/octet-stream";
-	private static final Logger LOGGER = Logger.getLogger(GoogleDriveAdapter.class.getName());
+	private static final Logger LOGGER = LoggerFactory.getLogger();
 	private final Credential credential;
 	private final Options options;
 	private final DriveFactory driveFactory;

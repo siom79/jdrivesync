@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.logging.Logger;
 
 public class Authorize {
-    private static final Logger LOGGER = Logger.getLogger(Authorize.class.getName());
     private static final String URN_IETF_WG_OAUTH_2_0_OOB = "urn:ietf:wg:oauth:2.0:oob";
     private final List<String> SCOPES = Arrays.asList("https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/drive.file",
             "https://www.googleapis.com/auth/drive.readonly", "https://www.googleapis.com/auth/drive.metadata.readonly",

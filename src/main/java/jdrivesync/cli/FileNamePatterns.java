@@ -1,6 +1,7 @@
 package jdrivesync.cli;
 
 import jdrivesync.exception.JDriveSyncException;
+import jdrivesync.logging.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class FileNamePatterns {
-    private static final Logger LOGGER = Logger.getLogger(FileNamePatterns.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger();
     private List<FileNamePattern> fileNamePatterns;
 
     private enum PatternType {

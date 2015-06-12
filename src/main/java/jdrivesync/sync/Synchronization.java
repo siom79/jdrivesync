@@ -7,6 +7,7 @@ import jdrivesync.fs.FileSystemAdapter;
 import jdrivesync.fs.FileSystemWalker;
 import jdrivesync.gdrive.GoogleDriveAdapter;
 import jdrivesync.gdrive.GoogleDriveWalker;
+import jdrivesync.logging.LoggerFactory;
 import jdrivesync.model.SyncDirectory;
 import jdrivesync.model.SyncFile;
 import jdrivesync.model.SyncItem;
@@ -33,7 +34,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Synchronization {
-	private static final Logger LOGGER = Logger.getLogger(Synchronization.class.getName());
+	private static final Logger LOGGER = LoggerFactory.getLogger();
 	public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 	private GoogleDriveAdapter googleDriveAdapter;
 	private FileSystemAdapter fileSystemAdapter;

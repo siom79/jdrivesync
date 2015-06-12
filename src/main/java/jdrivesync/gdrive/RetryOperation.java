@@ -2,13 +2,14 @@ package jdrivesync.gdrive;
 
 import jdrivesync.cli.Options;
 import jdrivesync.exception.JDriveSyncException;
+import jdrivesync.logging.LoggerFactory;
 
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class RetryOperation {
-    private static final Logger LOGGER = Logger.getLogger(RetryOperation.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger();
 
     public interface RetryCallback<T> {
         T execute() throws IOException;
