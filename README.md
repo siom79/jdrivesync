@@ -171,3 +171,7 @@ directory.
 Version control follows the guidelines known as [gitflow](http://nvie.com/posts/a-successful-git-branching-model/). This means
 basically that the master branch is always in a releasable state and that all work is done on feature branches that
 are later on merged to the `develop` branch.
+
+###Continous Integration###
+
+[Travis CI](https://travis-ci.org) build: ![Build Status](https://travis-ci.org/siom79/jdrivesync.svg)
