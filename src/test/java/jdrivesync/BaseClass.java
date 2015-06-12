@@ -5,6 +5,7 @@ import jdrivesync.cli.Options;
 import jdrivesync.gdrive.CredentialStore;
 import jdrivesync.gdrive.DriveFactory;
 import jdrivesync.gdrive.GoogleDriveAdapter;
+import jdrivesync.logging.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -17,7 +18,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
 public class BaseClass {
-    private static final Logger LOGGER = Logger.getLogger(ITBasicUpSync.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger();
     protected Options options;
     protected GoogleDriveAdapter googleDriveAdapter;
     protected DriveFactory driveFactory = new DriveFactory();

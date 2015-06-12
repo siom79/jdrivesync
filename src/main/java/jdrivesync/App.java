@@ -6,6 +6,7 @@ import jdrivesync.cli.SyncDirection;
 import jdrivesync.exception.JDriveSyncException;
 import jdrivesync.fs.FileSystemAdapter;
 import jdrivesync.gdrive.GoogleDriveAdapter;
+import jdrivesync.logging.LoggerFactory;
 import jdrivesync.stats.Statistics;
 import jdrivesync.sync.Synchronization;
 
@@ -18,7 +19,7 @@ import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 public class App {
-    private static final Logger LOGGER = Logger.getLogger(App.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger();
 
     public static void main(String[] args) {
         try {
@@ -49,14 +50,14 @@ public class App {
     private void run(String[] args) {
         initLogging();
         Options options = parseCli(args);
-		updateLogging(options);
+        LoggerFactory.configure(options);
         sync(options);
         printStatistics();
     }
 
     private void printStatistics() {
         Statistics statistics = Statistics.getInstance();
-        LOGGER.log(Level.INFO, String.format("Statistics:"));
+        LOGGER.log(Level.INFO, "Statistics:");
         LOGGER.log(Level.INFO, String.format("NEW:       %s %s", statistics.getCreated(), statistics.getCreated() != 1 ? "files" : "file"));
         LOGGER.log(Level.INFO, String.format("DELETED:   %s %s", statistics.getDeleted(), statistics.getDeleted() != 1 ? "files" : "file"));
         LOGGER.log(Level.INFO, String.format("UPDATED:   %s %s", statistics.getUpdated(), statistics.getUpdated() != 1 ? "files" : "file"));
@@ -77,13 +78,6 @@ public class App {
             throw new JDriveSyncException(JDriveSyncException.Reason.IOException, "Failed to read logging configuration: " + e.getMessage(), e);
         }
     }
-
-	private void updateLogging(Options options) {
-		Logger jdrivesyncLogger = Logger.getLogger("jdrivesync");
-		jdrivesyncLogger.setLevel(options.isVerbose() ? Level.FINE : Level.INFO);
-		Logger googleLogger = Logger.getLogger("com.google.api.client.http");
-        googleLogger.setLevel(options.isVerbose() ? Level.FINE : Level.INFO);
-	}
 
     void sync(Options options) {
         final GoogleDriveAdapter googleDriveAdapter = GoogleDriveAdapter.initGoogleDriveAdapter(options);
@@ -106,6 +100,9 @@ public class App {
             if (e.getReason() == JDriveSyncException.Reason.InvalidCliParameter) {
                 System.err.println(e.getMessage());
                 CliParser.printHelp();
+                throw new JDriveSyncException(JDriveSyncException.Reason.NormalTermination);
+            } else if (e.getReason() == JDriveSyncException.Reason.IOException) {
+                System.err.println(e.getMessage());
                 throw new JDriveSyncException(JDriveSyncException.Reason.NormalTermination);
             } else {
                 throw e;

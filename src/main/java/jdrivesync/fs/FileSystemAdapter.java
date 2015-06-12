@@ -2,6 +2,7 @@ package jdrivesync.fs;
 
 import jdrivesync.cli.Options;
 import jdrivesync.exception.JDriveSyncException;
+import jdrivesync.logging.LoggerFactory;
 import jdrivesync.model.SyncDirectory;
 import jdrivesync.model.SyncItem;
 import jdrivesync.report.ReportEntry;
@@ -22,7 +23,7 @@ import java.util.logging.Logger;
 import static jdrivesync.util.FileUtil.toRelativePath;
 
 public class FileSystemAdapter {
-	private static final Logger LOGGER = Logger.getLogger(FileSystemAdapter.class.getName());
+	private static final Logger LOGGER = LoggerFactory.getLogger();
 	public static final String TRASH = ".trash";
 	private final Options options;
 

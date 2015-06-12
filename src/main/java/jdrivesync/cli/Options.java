@@ -3,6 +3,7 @@ package jdrivesync.cli;
 import jdrivesync.constants.Constants;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -24,6 +25,7 @@ public class Options {
     private long lastModificationDateThreshold = 1500;
     private long httpChunkSizeInBytes = 10 * Constants.MB;
     private boolean verbose = false;
+    private Optional<Path> logFile = Optional.empty();
 
     public long getNetworkSleepBetweenAttempts() {
         return networkSleepBetweenAttempts;
@@ -75,6 +77,7 @@ public class Options {
                 ", useChecksum=" + useChecksum +
                 ", authenticationFile=" + authenticationFile +
                 ", networkNumberOfAttempts=" + networkNumberOfAttempts +
+                ", networkSleepBetweenAttempts=" + networkSleepBetweenAttempts +
                 ", ignoreFiles=" + ignoreFiles +
                 ", htmlReport=" + htmlReport +
                 ", syncDirection=" + syncDirection +
@@ -82,7 +85,8 @@ public class Options {
                 ", encryptFiles=" + encryptFiles +
                 ", encryptPassword='" + encryptPassword + '\'' +
                 ", lastModificationDateThreshold=" + lastModificationDateThreshold +
-                ", networkSleepBetweenAttempts=" + networkSleepBetweenAttempts +
+                ", httpChunkSizeInBytes=" + httpChunkSizeInBytes +
+                ", verbose=" + verbose +
                 '}';
     }
 
@@ -176,5 +180,13 @@ public class Options {
 
     public boolean isVerbose() {
         return verbose;
+    }
+
+    public void setLogFile(Optional<Path> logFile) {
+        this.logFile = logFile;
+    }
+
+    public Optional<Path> getLogFile() {
+        return logFile;
     }
 }

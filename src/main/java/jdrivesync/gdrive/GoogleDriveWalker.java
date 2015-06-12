@@ -3,6 +3,7 @@ package jdrivesync.gdrive;
 import com.google.api.services.drive.model.File;
 import jdrivesync.cli.Options;
 import jdrivesync.exception.JDriveSyncException;
+import jdrivesync.logging.LoggerFactory;
 import jdrivesync.model.SyncDirectory;
 import jdrivesync.model.SyncFile;
 import jdrivesync.model.SyncItem;
@@ -16,7 +17,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class GoogleDriveWalker implements Walker {
-    private static final Logger LOGGER = Logger.getLogger(GoogleDriveWalker.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger();
     private final Options options;
     private final GoogleDriveAdapter googleDriveAdapter;
 

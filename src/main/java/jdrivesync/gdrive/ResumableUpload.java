@@ -6,6 +6,7 @@ import com.google.api.services.drive.Drive;
 import jdrivesync.cli.Options;
 import jdrivesync.constants.Constants;
 import jdrivesync.exception.JDriveSyncException;
+import jdrivesync.logging.LoggerFactory;
 
 import java.io.*;
 import java.io.File;
@@ -15,8 +16,8 @@ import java.util.logging.Logger;
 import static jdrivesync.gdrive.RetryOperation.executeWithRetry;
 
 public class ResumableUpload {
-    private static final Logger LOGGER = Logger.getLogger(ResumableUpload.class.getName());
-    private static final int DEFAULT_CHUNK_SIZE = 1 * Constants.MB;
+    private static final Logger LOGGER = LoggerFactory.getLogger();
+    private static final int DEFAULT_CHUNK_SIZE = Constants.MB;
     private Options options;
 
     private static class Range {
