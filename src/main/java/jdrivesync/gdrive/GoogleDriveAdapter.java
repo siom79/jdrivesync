@@ -121,6 +121,11 @@ public class GoogleDriveAdapter {
 		try {
 			String id = file.getId();
 			if (isGoogleAppsDocument(file)) {
+				LOGGER.log(Level.FINE, String.format("Not deleting file '%s' because it is a Google Apps document.", id));
+				return;
+			}
+			if (options.isNoDelete()) {
+				LOGGER.log(Level.FINE, String.format("Not deleting file '%s' because option --no-delete is set.", id));
 				return;
 			}
 			if (options.isDeleteFiles()) {

@@ -69,14 +69,14 @@ public class FileSystemAdapter {
 					@Override
 					public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 						LOGGER.log(Level.FINE, "Deleting file '" + file + "'.");
-						Files.delete(file);
+						delete(file.toFile());
 						return FileVisitResult.CONTINUE;
 					}
 
 					@Override
 					public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
 						LOGGER.log(Level.FINE, "Deleting directory '" + dir + "'.");
-						Files.delete(dir);
+						delete(dir.toFile());
 						return FileVisitResult.CONTINUE;
 					}
 				});
@@ -89,27 +89,32 @@ public class FileSystemAdapter {
 		if (TRASH.equals(file.getName()) && file.getParentFile() != null && file.getParentFile().equals(options.getLocalRootDir().get())) {
 			LOGGER.log(Level.FINE, "Not deleting file '" + file.getAbsolutePath() + "' because it is our trash bin.");
 		} else {
-			if (options.isDeleteFiles()) {
-				LOGGER.log(Level.FINE, "Deleting file '" + file.getAbsolutePath() + "'.");
-				if (!options.isDryRun()) {
-					deleted = file.delete();
-				}
+			if (options.isNoDelete()) {
+				LOGGER.log(Level.FINE, "Not deleting file '" + file.getAbsolutePath() + "' because option --no-delete is set.");
+				deleted = true;
 			} else {
-				try {
+				if (options.isDeleteFiles()) {
+					LOGGER.log(Level.FINE, "Deleting file '" + file.getAbsolutePath() + "'.");
 					if (!options.isDryRun()) {
-						Path trashDir = createTrashDir();
-						Path relativePath = options.getLocalRootDir().get().toPath().relativize(file.toPath());
-						Path target = Paths.get(trashDir.toString(), relativePath.toString());
-						Path targetParent = target.getParent();
-						if (targetParent != null) {
-							Files.createDirectories(targetParent);
-						}
-						LOGGER.log(Level.FINE, "Moving file '" + file.getAbsolutePath() + "' to trash bin ('" + target + "').");
-						Files.move(file.toPath(), target);
-						deleted = true;
+						deleted = file.delete();
 					}
-				} catch (Exception e) {
-					LOGGER.log(Level.WARNING, "Could not move file to .trash directory: " + e.getMessage(), e);
+				} else {
+					try {
+						if (!options.isDryRun()) {
+							Path trashDir = createTrashDir();
+							Path relativePath = options.getLocalRootDir().get().toPath().relativize(file.toPath());
+							Path target = Paths.get(trashDir.toString(), relativePath.toString());
+							Path targetParent = target.getParent();
+							if (targetParent != null) {
+								Files.createDirectories(targetParent);
+							}
+							LOGGER.log(Level.FINE, "Moving file '" + file.getAbsolutePath() + "' to trash bin ('" + target + "').");
+							Files.move(file.toPath(), target);
+							deleted = true;
+						}
+					} catch (Exception e) {
+						LOGGER.log(Level.WARNING, "Could not move file to .trash directory: " + e.getMessage(), e);
+					}
 				}
 			}
 		}

@@ -98,8 +98,10 @@ The following options can be passed on the command line:
         The number of seconds to sleep between retries (default: 10).
 -v,--verbose
         Verbose output
---log-file
+--log-file <log-file>
         The location for the log file.
+--no-delete
+        Do not delete files.
 ```
 
 Hence a simple upload synchronization of your file collection under /home/user/documents will be done with:

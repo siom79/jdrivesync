@@ -26,6 +26,7 @@ public class Options {
     private long httpChunkSizeInBytes = 10 * Constants.MB;
     private boolean verbose = false;
     private Optional<Path> logFile = Optional.empty();
+    private boolean noDelete = false;
 
     public long getNetworkSleepBetweenAttempts() {
         return networkSleepBetweenAttempts;
@@ -188,5 +189,13 @@ public class Options {
 
     public Optional<Path> getLogFile() {
         return logFile;
+    }
+
+    public void setNoDelete(boolean noDelete) {
+        this.noDelete = noDelete;
+    }
+
+    public boolean isNoDelete() {
+        return noDelete;
     }
 }
