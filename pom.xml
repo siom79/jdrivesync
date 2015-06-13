@@ -9,9 +9,9 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.http.version>1.19.0</project.http.version>
-        <project.oauth.version>1.19.0</project.oauth.version>
-        <project.google-drive-service.version>v2-rev168-1.19.0</project.google-drive-service.version>
+        <project.http.version>1.20.0</project.http.version>
+        <project.oauth.version>1.20.0</project.oauth.version>
+        <project.google-drive-service.version>v2-rev174-1.20.0</project.google-drive-service.version>
         <powermock.version>1.6.2</powermock.version>
         <github.account>siom79</github.account>
         <github.project>jdrivesync</github.project>
@@ -53,11 +53,6 @@
             <groupId>com.google.http-client</groupId>
             <artifactId>google-http-client-jackson2</artifactId>
             <version>${project.http.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty</artifactId>
-            <version>6.1.26</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
