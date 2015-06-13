@@ -65,38 +65,42 @@ After successful installation you can start jdrivesync with:
 
 The following options can be passed on the command line:
 
-    -h,--help
-            Prints this help.
-    -l,--local-dir <local-dir>
-            Provides the local directory that should be synchronized.
-    -r,--remote-dir <remote-dir>
-            Provides the remote directory that should be synchronized.
-    -a,--authentication-file <auth-file>
-            Use given authentication file instead of default one (.jdrivesync).
-    --dry-run
-            Simulates all data manipulating operations (dry run).
-    --delete
-            Deletes all files instead of moving them to trash.
-    -c,--checksum
-            Use MD5 checksum instead of last modification timestamp of file.
-    -i,--ignore-file <ignore-file>
-            Provides a file with newline separated file and/or path name patterns that should be ignored.
-    -u,--up
-            Synchronization is performed from the local to the remote site (default).
-    -d,--down
-            Synchronization is performed from the remote to the local site.
-    --html-report
-            Creates an HTML report of the synchronization.
-    -m,--max-file-size <maxFileSize>
-            Provides the maximum file size in MB.
-    --http-chunk-size
-            The size of a chunk in MB used for chunked uploads (default: 10MB).
-    --network-number-of-retries
-            The number of times how often a request is retried (default: 3).
-    --network-sleep-between-retries
-            The number of seconds to sleep between retries (default: 10).
-    -v,--verbose
-            Verbose output
+```
+-h,--help
+        Prints this help.
+-l,--local-dir <local-dir>
+        Provides the local directory that should be synchronized.
+-r,--remote-dir <remote-dir>
+        Provides the remote directory that should be synchronized.
+-a,--authentication-file <auth-file>
+        Use given authentication file instead of default one (.jdrivesync).
+--dry-run
+        Simulates all data manipulating operations (dry run).
+--delete
+        Deletes all files instead of moving them to trash.
+-c,--checksum
+        Use MD5 checksum instead of last modification timestamp of file.
+-i,--ignore-file <ignore-file>
+        Provides a file with newline separated file and/or path name patterns that should be ignored.
+-u,--up
+        Synchronization is performed from the local to the remote site (default).
+-d,--down
+        Synchronization is performed from the remote to the local site.
+--html-report
+        Creates an HTML report of the synchronization.
+-m,--max-file-size <maxFileSize>
+        Provides the maximum file size in MB.
+--http-chunk-size
+        The size of a chunk in MB used for chunked uploads (default: 10MB).
+--network-number-of-retries
+        The number of times how often a request is retried (default: 3).
+--network-sleep-between-retries
+        The number of seconds to sleep between retries (default: 10).
+-v,--verbose
+        Verbose output
+--log-file
+        The location for the log file.
+```
 
 Hence a simple upload synchronization of your file collection under /home/user/documents will be done with:
 
@@ -171,6 +175,16 @@ directory.
 Version control follows the guidelines known as [gitflow](http://nvie.com/posts/a-successful-git-branching-model/). This means
 basically that the master branch is always in a releasable state and that all work is done on feature branches that
 are later on merged to the `develop` branch.
+
+###Integration tests###
+
+Integration tests are written with [JUnit](http://junit.org/) and reside under `src/test/java`. There class name has
+to start with `IT` in order to distinguish them from normal unit tests. To run the integration tests place a valid authentication
+file under `src/test/resources/.jdrivesync` and execute them with (as they are not executed during a normal build):
+
+```
+mvn test -Pintegration-test
+```
 
 ###Continous Integration###
 
