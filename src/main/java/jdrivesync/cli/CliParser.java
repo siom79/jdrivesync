@@ -18,7 +18,7 @@ public class CliParser {
 		Help("-h", "--help", "Prints this help."),
 		LocalRootDir("-l", "--local-dir", "Provides the local directory that should be synchronized.", "<local-dir>"),
 		RemoteRootDir("-r", "--remote-dir", "Provides the remote directory that should be synchronized.", "<remote-dir>"),
-		AuthenticationFile("-a", "--authentication-file", "Use given authentication file instead of default one (.jdrivesync).", "<auth-file>"),
+		AuthenticationFile("-a", "--authentication-file", "Use given authentication file instead of default one (~/.jdrivesync).", "<auth-file>"),
 		DryRun(null, "--dry-run", "Simulates all data manipulating operations (dry run)."),
 		Delete(null, "--delete", "Deletes all files instead of moving them to trash."),
 		Checksum("-c", "--checksum", "Use MD5 checksum instead of last modification timestamp of file."),

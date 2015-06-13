@@ -73,7 +73,7 @@ The following options can be passed on the command line:
 -r,--remote-dir <remote-dir>
         Provides the remote directory that should be synchronized.
 -a,--authentication-file <auth-file>
-        Use given authentication file instead of default one (.jdrivesync).
+        Use given authentication file instead of default one (~/.jdrivesync).
 --dry-run
         Simulates all data manipulating operations (dry run).
 --delete
@@ -111,11 +111,11 @@ to this URL, login with your Google account and grant jdrivesync the requested p
 'Accept' you will be redirected to a new page that displays an authentication token. Copy this token to
 the command line and press Enter.
 
-Now jdrivesync will create a file called .jdrivesync in your current working directory. This is your authentication file.
-As long as jdrivesync will find a valid authentication file in your current working directory, it will use it. When you
+Now jdrivesync will create a file called .jdrivesync in your home directory. This is your authentication file.
+As long as jdrivesync will find a valid authentication file in your home directory, it will use it. When you
 want to use an alternative file, you can specify that on the command line:
 
-     java -jar jdrivesync-0.2.4-jar-with-dependencies.jar -u -l "/home/user/documents" -a ".myfile.properties"
+     java -jar jdrivesync-0.2.4-jar-with-dependencies.jar -u -l "/home/user/documents" -a "my-auth-file.properties"
 
 You can also exclude certain files from being uploaded/downloaded. Just create a text document that contains file name
 patterns and provide the path to this file using the option -i:
@@ -185,6 +185,9 @@ file under `src/test/resources/.jdrivesync` and execute them with (as they are n
 ```
 mvn test -Pintegration-test
 ```
+
+Please use a separate Google account for these integration tests as they are written to delete and to list all
+files of the account.
 
 ###Continous Integration###
 

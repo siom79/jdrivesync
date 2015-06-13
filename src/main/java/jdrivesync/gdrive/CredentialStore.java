@@ -15,6 +15,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -38,7 +40,8 @@ public class CredentialStore {
         properties.setProperty(PROP_ACCESS_TOKEN, credential.getAccessToken());
         properties.setProperty(PROP_REFRESH_TOKEN, credential.getRefreshToken());
         try {
-            properties.store(new FileWriter(FILE_NAME), "Properties of jdrivesync.");
+			File file = getAuthenticationFile(options);
+            properties.store(new FileWriter(file), "Properties of jdrivesync.");
         } catch (IOException e) {
             throw new JDriveSyncException(JDriveSyncException.Reason.IOException, "Failed to store properties file: " + e.getMessage(), e);
         }
@@ -54,11 +57,7 @@ public class CredentialStore {
     public Optional<Credential> load() {
         Properties properties = new Properties();
         try {
-            String filename = FILE_NAME;
-            if(options.getAuthenticationFile().isPresent()) {
-                filename = options.getAuthenticationFile().get();
-            }
-            File file = new File(filename);
+			File file = getAuthenticationFile(options);
             if(!file.exists() || !file.canRead()) {
                 LOGGER.log(Level.FINE, "Cannot find or read properties file. Returning empty credentials.");
                 return Optional.empty();
@@ -75,4 +74,12 @@ public class CredentialStore {
             throw new JDriveSyncException(JDriveSyncException.Reason.IOException, "Failed to load properties file: " + e.getMessage(), e);
         }
     }
+
+    private File getAuthenticationFile(Options options) {
+		Path path = Paths.get(System.getProperty("user.home"), FILE_NAME);
+		if (options.getAuthenticationFile().isPresent()) {
+			path = Paths.get(options.getAuthenticationFile().get());
+		}
+		return path.toFile();
+	}
 }
