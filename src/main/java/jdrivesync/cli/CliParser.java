@@ -31,7 +31,8 @@ public class CliParser {
 		NetworkNumberOfReries(null, "--network-number-of-retries", "The number of times how often a request is retried (default: 3)."),
 		NetworkSleepBetweenRetries(null, "--network-sleep-between-retries", "The number of seconds to sleep between retries (default: 10)."),
 		Verbose("-v", "--verbose", "Verbose output"),
-		LogFile(null, "--log-file", "The location for the log file.");
+		LogFile(null, "--log-file", "The location for the log file.", "<log-file>"),
+		NoDelete(null, "--no-delete", "Do not delete files.");
 		//Password("-p", "--password", "The password used to encrypt/decrypt the files.", "<password>"),
 		//EncryptFile("-e", "--encrypt-files", "Provides a file with newline separated file and/or path name patterns that should be encrypted.", "<encrypt-file>");
 		private final String shortOption;
@@ -188,6 +189,8 @@ public class CliParser {
 					throw new JDriveSyncException(JDriveSyncException.Reason.IOException, String.format("The log file '%s' is not writable.", path.toString()));
 				}
 				options.setLogFile(Optional.of(path));
+			} else if (argument == Argument.NoDelete) {
+				options.setNoDelete(true);
 			} else {
 				throw new JDriveSyncException(JDriveSyncException.Reason.InvalidCliParameter, "The parameter '" + arg + "' is not valid.");
 			}
