@@ -1,5 +1,7 @@
 package jdrivesync.walker;
 
+import jdrivesync.cli.Options;
+
 public interface Walker {
-    void walk(WalkerVisitor fileSystemVisitor);
+    void walk(Options options, WalkerVisitor fileSystemVisitor);
 }

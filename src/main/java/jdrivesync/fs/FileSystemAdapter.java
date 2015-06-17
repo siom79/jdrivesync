@@ -7,6 +7,7 @@ import jdrivesync.model.SyncDirectory;
 import jdrivesync.model.SyncItem;
 import jdrivesync.report.ReportEntry;
 import jdrivesync.report.ReportFactory;
+import jdrivesync.sync.SyncAction;
 import jdrivesync.sync.Synchronization;
 
 import java.io.File;
@@ -84,19 +85,23 @@ public class FileSystemAdapter {
 		}
 	}
 
-	public boolean delete(File file) {
-		boolean deleted = false;
+	public SyncAction delete(File file) {
+		SyncAction syncAction = SyncAction.Skipped;
 		if (TRASH.equals(file.getName()) && file.getParentFile() != null && file.getParentFile().equals(options.getLocalRootDir().get())) {
 			LOGGER.log(Level.FINE, "Not deleting file '" + file.getAbsolutePath() + "' because it is our trash bin.");
 		} else {
 			if (options.isNoDelete()) {
 				LOGGER.log(Level.FINE, "Not deleting file '" + file.getAbsolutePath() + "' because option --no-delete is set.");
-				deleted = true;
 			} else {
 				if (options.isDeleteFiles()) {
 					LOGGER.log(Level.FINE, "Deleting file '" + file.getAbsolutePath() + "'.");
 					if (!options.isDryRun()) {
-						deleted = file.delete();
+						boolean deleted = file.delete();
+						if (deleted) {
+							syncAction = SyncAction.Successful;
+						} else {
+							syncAction = SyncAction.Error;
+						}
 					}
 				} else {
 					try {
@@ -110,7 +115,7 @@ public class FileSystemAdapter {
 							}
 							LOGGER.log(Level.FINE, "Moving file '" + file.getAbsolutePath() + "' to trash bin ('" + target + "').");
 							Files.move(file.toPath(), target);
-							deleted = true;
+							syncAction = SyncAction.Successful;
 						}
 					} catch (Exception e) {
 						LOGGER.log(Level.WARNING, "Could not move file to .trash directory: " + e.getMessage(), e);
@@ -118,7 +123,7 @@ public class FileSystemAdapter {
 				}
 			}
 		}
-		return deleted;
+		return syncAction;
 	}
 
 	private Path createTrashDir() throws IOException {

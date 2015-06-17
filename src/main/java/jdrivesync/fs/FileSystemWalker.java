@@ -29,12 +29,12 @@ public class FileSystemWalker implements Walker {
         this.fileSystemAdapter = fileSystemAdapter;
     }
 
-    public void walk(WalkerVisitor fileSystemVisitor) {
+    public void walk(Options options, WalkerVisitor fileSystemVisitor) {
         SyncDirectory rootDirectory = new SyncDirectory(Optional.of(this.startDirectory), Optional.empty(), "/", Optional.empty());
-        walkInternal(rootDirectory, fileSystemVisitor, fileSystemAdapter);
+        walkInternal(rootDirectory, fileSystemVisitor, fileSystemAdapter, options);
     }
 
-    private void walkInternal(SyncDirectory syncDirectory, WalkerVisitor fileSystemVisitor, FileSystemAdapter fileSystemAdapter) {
+    private void walkInternal(SyncDirectory syncDirectory, WalkerVisitor fileSystemVisitor, FileSystemAdapter fileSystemAdapter, Options options) {
         if (syncDirectory.getLocalFile().isPresent()) {
             File directory = syncDirectory.getLocalFile().get();
             if (fileSystemAdapter.exists(directory)) {
@@ -42,7 +42,7 @@ public class FileSystemWalker implements Walker {
                     File[] files = fileSystemAdapter.listFiles(directory);
                     if (files != null) {
                         for (File file : files) {
-                            String relativePath = FileUtil.toRelativePath(file, options);
+                            String relativePath = FileUtil.toRelativePath(file, this.options);
                             if (fileSystemAdapter.isDirectory(file)) {
                                 if (!fileShouldBeIgnored(relativePath, true, file)) {
                                     SyncDirectory subSyncDirectory = new SyncDirectory(Optional.of(file), Optional.empty(), relativePath, Optional.of(syncDirectory));
@@ -62,22 +62,25 @@ public class FileSystemWalker implements Walker {
                                 SyncItem syncItem = childrenIterator.next();
                                 if (syncItem instanceof SyncDirectory) {
                                     SyncDirectory subSyncDir = (SyncDirectory) syncItem;
-                                    walkInternal(subSyncDir, fileSystemVisitor, fileSystemAdapter);
+                                    walkInternal(subSyncDir, fileSystemVisitor, fileSystemAdapter, options);
                                 }
                                 childrenIterator.remove(); //free memory
                             }
                         }
                     } else {
-                        LOGGER.log(Level.FINE, "Skipping directory '" + directory.getAbsolutePath() + "' because list of files is null/zero.");
-                        ReportFactory.getInstance(options).log(new ReportEntry(FileUtil.toRelativePath(directory, options), ReportEntry.Status.Synchronized, ReportEntry.Action.Skipped));
+                        String msg = "Skipping directory '" + directory.getAbsolutePath() + "' because list of files is null/zero.";
+                        LOGGER.log(Level.FINE, msg);
+                        ReportFactory.getInstance(this.options).log(new ReportEntry(FileUtil.toRelativePath(directory, this.options), ReportEntry.Status.Error, ReportEntry.Action.Skipped_Error, ReportEntry.getDirection(options), msg));
                     }
                 } else {
-                    LOGGER.log(Level.FINE, "Skipping directory '" + directory.getAbsolutePath() + "' because read permission is missing.");
-                    ReportFactory.getInstance(options).log(new ReportEntry(FileUtil.toRelativePath(directory, options), ReportEntry.Status.Error, ReportEntry.Action.Skipped, "Missing read permission."));
+                    String msg = "Skipping directory '" + directory.getAbsolutePath() + "' because read permission is missing.";
+                    LOGGER.log(Level.FINE, msg);
+                    ReportFactory.getInstance(this.options).log(new ReportEntry(FileUtil.toRelativePath(directory, this.options), ReportEntry.Status.Error, ReportEntry.Action.Skipped_Error, ReportEntry.getDirection(options), msg));
                 }
             } else {
-                LOGGER.log(Level.FINE, "Skipping directory '" + directory.getAbsolutePath() + "' because it does not exist.");
-                ReportFactory.getInstance(options).log(new ReportEntry(FileUtil.toRelativePath(directory, options), ReportEntry.Status.Error, ReportEntry.Action.Skipped, "Does not exist."));
+                String msg = "Skipping directory '" + directory.getAbsolutePath() + "' because it does not exist.";
+                LOGGER.log(Level.FINE, msg);
+                ReportFactory.getInstance(this.options).log(new ReportEntry(FileUtil.toRelativePath(directory, this.options), ReportEntry.Status.Error, ReportEntry.Action.Skipped_Error, ReportEntry.getDirection(options), msg));
             }
         } else {
             LOGGER.log(Level.FINE, "Skipping directory '" + syncDirectory.getPath() + "' because no local directory is set.");

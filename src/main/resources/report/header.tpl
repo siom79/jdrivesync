@@ -66,6 +66,7 @@ function filter() {
         <td>Path</td>
         <td>Status</td>
         <td>Action</td>
+        <td>Direction</td>
     </tr>
     </thead>
     <tbody>

@@ -78,13 +78,14 @@ public class HtmlReport implements Report {
         sb.append("<td>").append(encodeHTML(reportEntry.getRelativePath())).append("</td>\n");
         sb.append("<td>").append(encodeHTML(statusEntry(reportEntry))).append("</td>\n");
         sb.append("<td>").append(reportEntry.getAction()).append("</td>\n");
+        sb.append("<td>").append(reportEntry.getDirection()).append("</td>\n");
         sb.append("</tr>\n");
         return sb.toString();
     }
 
     public static String statusEntry(ReportEntry reportEntry) {
         StringBuilder sb = new StringBuilder();
-        if(reportEntry.getStatus() == ReportEntry.Status.Error) {
+        if(reportEntry.getStatus() == ReportEntry.Status.Error || reportEntry.getAction() == ReportEntry.Action.Skipped_Error) {
             sb.append(reportEntry.getStatus());
             sb.append("(");
             if(reportEntry.getErrorMessage().isPresent()) {
@@ -129,7 +130,7 @@ public class HtmlReport implements Report {
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
             if (c > 127 || c == '"' || c == '<' || c == '>') {
-                out.append("&#" + (int) c + ";");
+                out.append("&#").append((int) c).append(";");
             } else {
                 out.append(c);
             }

@@ -1,6 +1,7 @@
 package jdrivesync.report;
 
 import jdrivesync.cli.Options;
+import jdrivesync.cli.SyncDirection;
 import jdrivesync.stats.StatisticsDelegate;
 
 import java.util.logging.Level;

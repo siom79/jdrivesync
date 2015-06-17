@@ -18,6 +18,7 @@ import jdrivesync.logging.LoggerFactory;
 import jdrivesync.model.SyncDirectory;
 import jdrivesync.model.SyncFile;
 import jdrivesync.model.SyncItem;
+import jdrivesync.sync.SyncAction;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -108,40 +109,43 @@ public class GoogleDriveAdapter {
 		}
 	}
 
-	public void deleteFile(File id) {
-		delete(id);
+	public SyncAction deleteFile(File id) {
+		return delete(id);
 	}
 
-	public void deleteDirectory(File id) {
-		delete(id);
+	public SyncAction deleteDirectory(File id) {
+		return delete(id);
 	}
 
-	private void delete(File file) {
+	private SyncAction delete(File file) {
 		Drive drive = driveFactory.getDrive(this.credential);
 		try {
 			String id = file.getId();
 			if (isGoogleAppsDocument(file)) {
 				LOGGER.log(Level.FINE, String.format("Not deleting file '%s' because it is a Google Apps document.", id));
-				return;
+				return SyncAction.Skipped;
 			}
 			if (options.isNoDelete()) {
 				LOGGER.log(Level.FINE, String.format("Not deleting file '%s' because option --no-delete is set.", id));
-				return;
+				return SyncAction.Skipped;
 			}
 			if (options.isDeleteFiles()) {
 				LOGGER.log(Level.FINE, "Deleting file " + id + ".");
 				if (!options.isDryRun()) {
 					executeWithRetry(options, () -> drive.files().delete(id).execute());
+					return SyncAction.Successful;
 				}
 			} else {
 				LOGGER.log(Level.FINE, "Trashing file " + id + ".");
 				if (!options.isDryRun()) {
 					executeWithRetry(options, () -> drive.files().trash(id).execute());
+					return SyncAction.Successful;
 				}
 			}
 		} catch (IOException e) {
 			throw new JDriveSyncException(JDriveSyncException.Reason.IOException, "Failed to delete file: " + e.getMessage(), e);
 		}
+		return SyncAction.Skipped;
 	}
 
 	public boolean isGoogleAppsDocument(File file) {
@@ -154,10 +158,7 @@ public class GoogleDriveAdapter {
 	}
 
 	public boolean isDirectory(File file) {
-		if (MIME_TYPE_FOLDER.equals(file.getMimeType())) {
-			return true;
-		}
-		return false;
+		return MIME_TYPE_FOLDER.equals(file.getMimeType());
 	}
 
 	public InputStream downloadFile(SyncItem syncItem) {

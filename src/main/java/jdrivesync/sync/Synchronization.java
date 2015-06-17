@@ -48,7 +48,7 @@ public class Synchronization {
 
 	public void syncUp(final Options options) {
 		FileSystemWalker fileSystemWalker = new FileSystemWalker(options, fileSystemAdapter);
-		fileSystemWalker.walk(new WalkerVisitor() {
+		fileSystemWalker.walk(options, new WalkerVisitor() {
 			@Override
 			public WalkerVisitorResult visitDirectory(SyncDirectory syncDirectory) {
 				try {
@@ -74,8 +74,9 @@ public class Synchronization {
 									processRemoteChildNotFound(remoteChild, syncDirectory);
 								}
 							} catch (Exception e) {
-								LOGGER.log(Level.WARNING, "Skipping file/directory '" + syncDirectory.getPath() + "' because an exception occurred: " + e.getMessage(), e);
-								ReportFactory.getInstance(options).log(new ReportEntry(syncDirectory.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped, e.getMessage()));
+								String msg = "Skipping file/directory '" + syncDirectory.getPath() + "' because an exception occurred: " + e.getMessage();
+								LOGGER.log(Level.WARNING, msg, e);
+								ReportFactory.getInstance(options).log(new ReportEntry(syncDirectory.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped_Error, ReportEntry.getDirection(options), msg));
 							}
 						}
 						processLocalFilesWithoutRemoteFile(syncDirectory);
@@ -90,8 +91,9 @@ public class Synchronization {
 							throw jDriveSyncException;
 						}
 					}
-					LOGGER.log(Level.WARNING, "Skipping directory '" + syncDirectory.getPath() + "' because an exception occurred: " + e.getMessage(), e);
-					ReportFactory.getInstance(options).log(new ReportEntry(syncDirectory.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped, e.getMessage()));
+					String msg = "Skipping directory '" + syncDirectory.getPath() + "' because an exception occurred: " + e.getMessage();
+					LOGGER.log(Level.WARNING, msg, e);
+					ReportFactory.getInstance(options).log(new ReportEntry(syncDirectory.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped_Error, ReportEntry.getDirection(options), msg));
 					return WalkerVisitorResult.SkipSubtree;
 				}
 			}
@@ -105,18 +107,19 @@ public class Synchronization {
 							if (syncItem instanceof SyncFile) {
 								LOGGER.log(Level.FINE, "Storing new file '" + syncItem.getPath() + "'.");
 								googleDriveAdapter.store((SyncFile) syncItem);
-								ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created));
+								ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created, ReportEntry.getDirection(options)));
 							} else if (syncItem instanceof SyncDirectory) {
 								LOGGER.log(Level.FINE, "Storing new directory '" + syncItem.getPath() + "'.");
 								googleDriveAdapter.store((SyncDirectory) syncItem);
-								ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created));
+								ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created, ReportEntry.getDirection(options)));
 							} else {
 								LOGGER.log(Level.FINE, "Type of syncItem is not supported: " + syncItem.getClass().getName());
 							}
 						}
 					} catch (Exception e) {
-						LOGGER.log(Level.WARNING, "Skipping file/directory '" + syncItem.getPath() + "' because an exception occurred: " + e.getMessage(), e);
-						ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped, e.getMessage()));
+						String msg = "Skipping file/directory '" + syncItem.getPath() + "' because an exception occurred: " + e.getMessage();
+						LOGGER.log(Level.WARNING, msg, e);
+						ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped_Error, ReportEntry.getDirection(options), msg));
 					}
 				}
 			}
@@ -124,12 +127,20 @@ public class Synchronization {
 			private void processRemoteChildNotFound(com.google.api.services.drive.model.File remoteChild, SyncDirectory syncDirectory) {
 				LOGGER.log(Level.FINE, "Deleting remote file/directory '" + remoteChild.getTitle() + "' because locally it does not exist any more.");
 				if (googleDriveAdapter.isDirectory(remoteChild)) {
-					googleDriveAdapter.deleteDirectory(remoteChild);
-					ReportFactory.getInstance(options).log(new ReportEntry(syncDirectory.getPath() + "/" + remoteChild.getTitle(), ReportEntry.Status.Synchronized, ReportEntry.Action.Deleted));
+					SyncAction syncAction = googleDriveAdapter.deleteDirectory(remoteChild);
+					if (syncAction == SyncAction.Successful) {
+						ReportFactory.getInstance(options).log(new ReportEntry(syncDirectory.getPath() + "/" + remoteChild.getTitle(), ReportEntry.Status.Synchronized, ReportEntry.Action.Deleted, ReportEntry.getDirection(options)));
+					} else {
+						ReportFactory.getInstance(options).log(new ReportEntry(syncDirectory.getPath() + "/" + remoteChild.getTitle(), ReportEntry.Status.Skipped, ReportEntry.Action.Skipped_Deletion, ReportEntry.getDirection(options)));
+					}
 				} else {
 					if (!googleDriveAdapter.isGoogleAppsDocument(remoteChild)) {
-						googleDriveAdapter.deleteFile(remoteChild);
-						ReportFactory.getInstance(options).log(new ReportEntry(syncDirectory.getPath() + "/" + remoteChild.getTitle(), ReportEntry.Status.Synchronized, ReportEntry.Action.Deleted));
+						SyncAction syncAction = googleDriveAdapter.deleteFile(remoteChild);
+						if (syncAction == SyncAction.Successful) {
+							ReportFactory.getInstance(options).log(new ReportEntry(syncDirectory.getPath() + "/" + remoteChild.getTitle(), ReportEntry.Status.Synchronized, ReportEntry.Action.Deleted, ReportEntry.getDirection(options)));
+						} else {
+							ReportFactory.getInstance(options).log(new ReportEntry(syncDirectory.getPath() + "/" + remoteChild.getTitle(), ReportEntry.Status.Skipped, ReportEntry.Action.Skipped_Deletion, ReportEntry.getDirection(options)));
+						}
 					}
 				}
 			}
@@ -139,28 +150,37 @@ public class Synchronization {
 				if (googleDriveAdapter.isDirectory(remoteChild)) {
 					if (!(syncItem instanceof SyncDirectory)) {
 						LOGGER.log(Level.FINE, "Deleting remote directory '" + remoteChild.getTitle() + "' because locally it is a file (" + syncItem.getPath() + ").");
-						googleDriveAdapter.deleteDirectory(remoteChild);
-						if (syncItem instanceof SyncFile) {
-							SyncFile syncFile = (SyncFile) syncItem;
-							googleDriveAdapter.store(syncFile);
-							syncItem.setRemoteFile(Optional.of(remoteChild));
-							syncItemFound = syncItem;
-							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created));
+						SyncAction syncAction = googleDriveAdapter.deleteDirectory(remoteChild);
+						if (syncAction == SyncAction.Successful) {
+							if (syncItem instanceof SyncFile) {
+								SyncFile syncFile = (SyncFile) syncItem;
+								googleDriveAdapter.store(syncFile);
+								syncItem.setRemoteFile(Optional.of(remoteChild));
+								syncItemFound = syncItem;
+								ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created, ReportEntry.getDirection(options)));
+							}
+						} else {
+							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Skipped, ReportEntry.Action.Skipped_Deletion, ReportEntry.getDirection(options)));
 						}
 					} else {
 						syncItem.setRemoteFile(Optional.of(remoteChild));
 						syncItemFound = syncItem;
-						ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Unchanged));
+						ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Unchanged, ReportEntry.getDirection(options)));
 					}
 				} else {
 					if (syncItem instanceof SyncDirectory) {
 						if (!googleDriveAdapter.isGoogleAppsDocument(remoteChild)) {
 							LOGGER.log(Level.FINE, "Deleting remote file '" + remoteChild.getTitle() + "' because locally it is a directory (" + syncItem.getPath() + ").");
-							googleDriveAdapter.deleteFile(remoteChild);
-							googleDriveAdapter.store((SyncDirectory) syncItem);
-							syncItem.setRemoteFile(Optional.of(remoteChild));
-							syncItemFound = syncItem;
-							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created));
+							SyncAction deleteAction = googleDriveAdapter.deleteFile(remoteChild);
+							if (deleteAction == SyncAction.Successful) {
+								ReportFactory.getInstance(options).log(new ReportEntry(remoteChild.getTitle(), ReportEntry.Status.Synchronized, ReportEntry.Action.Deleted, ReportEntry.getDirection(options)));
+								googleDriveAdapter.store((SyncDirectory) syncItem);
+								syncItem.setRemoteFile(Optional.of(remoteChild));
+								syncItemFound = syncItem;
+								ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created, ReportEntry.getDirection(options)));
+							} else {
+								ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Skipped, ReportEntry.Action.Skipped_Deletion, ReportEntry.getDirection(options)));
+							}
 						}
 					} else {
 						syncItem.setRemoteFile(Optional.of(remoteChild));
@@ -182,7 +202,7 @@ public class Synchronization {
 								performChecksumCheck(syncItemFound, localFile, true);
 							} else {
 								LOGGER.log(Level.FINE, "Last modification dates and sizes are equal for file '" + syncItemFound.getPath() + "' (local: " + DATE_FORMAT.format(new Date(modifiedDateLocal.toMillis())) + ", " + sizeLocal + " bytes; remote: " + DATE_FORMAT.format(new Date(modifiedDateRemote.getValue())) + ", " + sizeRemote + " bytes). Not updating file.");
-								ReportFactory.getInstance(options).log(new ReportEntry(syncItemFound.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Unchanged));
+								ReportFactory.getInstance(options).log(new ReportEntry(syncItemFound.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Unchanged, ReportEntry.getDirection(options)));
 							}
 						}
 					}
@@ -206,7 +226,7 @@ public class Synchronization {
 						parentId = remoteFileOptional.get().getId();
 					} else {
 						googleDriveAdapter.store(syncDirectory);
-						ReportFactory.getInstance(options).log(new ReportEntry(syncDirectory.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created));
+						ReportFactory.getInstance(options).log(new ReportEntry(syncDirectory.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created, ReportEntry.getDirection(options)));
 						remoteFileOptional = syncDirectory.getRemoteFile();
 						if (remoteFileOptional.isPresent()) {
 							parentId = remoteFileOptional.get().getId();
@@ -261,17 +281,17 @@ public class Synchronization {
 					if (!googleDriveAdapter.isGoogleAppsDocument(remoteFile)) {
 						LOGGER.log(Level.FINE, "MD5 checksums are not equal for file '" + syncItemFound.getPath() + "' (local: " + md5ChecksumLocal + "; remote: " + md5ChecksumRemote + "). Updating file.");
 						googleDriveAdapter.updateFile(syncItemFound);
-						ReportFactory.getInstance(options).log(new ReportEntry(syncItemFound.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Updated));
+						ReportFactory.getInstance(options).log(new ReportEntry(syncItemFound.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Updated, ReportEntry.getDirection(options)));
 					}
 				} else {
 					if (!updateMetadata) {
 						LOGGER.log(Level.FINE, "MD5 checksums are equal for file '" + syncItemFound.getPath() + "' (local: " + md5ChecksumLocal + "; remote: " + md5ChecksumRemote + "). Not updating file.");
-						ReportFactory.getInstance(options).log(new ReportEntry(syncItemFound.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Unchanged));
+						ReportFactory.getInstance(options).log(new ReportEntry(syncItemFound.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Unchanged, ReportEntry.getDirection(options)));
 					} else {
 						if (!googleDriveAdapter.isGoogleAppsDocument(remoteFile)) {
 							LOGGER.log(Level.FINE, "MD5 checksums are equal for file '" + syncItemFound.getPath() + "' (local: " + md5ChecksumLocal + "; remote: " + md5ChecksumRemote + "). Updating metadata of remote file.");
 							googleDriveAdapter.updateMetadata(syncItemFound);
-							ReportFactory.getInstance(options).log(new ReportEntry(syncItemFound.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.UpdatedMetadata));
+							ReportFactory.getInstance(options).log(new ReportEntry(syncItemFound.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.UpdatedMetadata, ReportEntry.getDirection(options)));
 						}
 					}
 				}
@@ -313,7 +333,7 @@ public class Synchronization {
 
 	public void syncDown(Options options) {
 		GoogleDriveWalker googleDriveWalker = new GoogleDriveWalker(options, googleDriveAdapter);
-		googleDriveWalker.walk(new WalkerVisitor() {
+		googleDriveWalker.walk(options, new WalkerVisitor() {
 			@Override
 			public WalkerVisitorResult visitDirectory(SyncDirectory syncDirectory) {
 				WalkerVisitor.WalkerVisitorResult result = WalkerVisitor.WalkerVisitorResult.Continue;
@@ -341,7 +361,7 @@ public class Synchronization {
 					processRemoteFilesWithoutLocalFile(syncDirectory);
 				} else {
 					LOGGER.log(Level.FINE, "Skipping directory " + syncDirectory.getPath() + " because local file is not present.");
-					ReportFactory.getInstance(options).log(new ReportEntry(syncDirectory.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Unchanged));
+					ReportFactory.getInstance(options).log(new ReportEntry(syncDirectory.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Unchanged, ReportEntry.getDirection(options)));
 				}
 				return result;
 			}
@@ -358,27 +378,30 @@ public class Synchronization {
 								File newDirectory = new File(fileDirectory, remoteFile.getTitle());
 								try {
 									createLocalDir(newDirectory, syncItem, remoteFile);
-									ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created));
+									ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created, ReportEntry.getDirection(options)));
 								} catch (IOException e) {
-									LOGGER.log(Level.WARNING, "Could not create local directory '" + newDirectory.getAbsolutePath() + "': " + e.getMessage(), e);
-									ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped, e.getMessage()));
+									String msg = "Could not create local directory '" + newDirectory.getAbsolutePath() + "': " + e.getMessage();
+									LOGGER.log(Level.WARNING, msg, e);
+									ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped_Error, ReportEntry.getDirection(options), msg));
 								}
 							} else {
 								LOGGER.log(Level.FINE, "Downloading file '" + syncItem.getPath() + "'.");
 								try {
 									InputStream stream = googleDriveAdapter.downloadFile(syncItem);
 									fileSystemAdapter.storeFile(stream, syncItem);
-									ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created));
+									ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created, ReportEntry.getDirection(options)));
 								} catch (Exception e) {
-									LOGGER.log(Level.SEVERE, "Failed to store file '" + syncItem.getPath() + "': " + e.getMessage());
-									ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped));
+									String msg = "Failed to store file '" + syncItem.getPath() + "': " + e.getMessage();
+									LOGGER.log(Level.SEVERE, msg);
+									ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped_Error, ReportEntry.getDirection(options), msg));
 								}
 							}
 						}
 					}
 				} else {
-					LOGGER.log(Level.FINE, "Cannot process missing local files because local directory '" + syncDirectory.getPath() + "' is missing.");
-					ReportFactory.getInstance(options).log(new ReportEntry(syncDirectory.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped));
+					String msg = "Cannot process missing local files because local directory '" + syncDirectory.getPath() + "' is missing.";
+					LOGGER.log(Level.FINE, msg);
+					ReportFactory.getInstance(options).log(new ReportEntry(syncDirectory.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped_Error, ReportEntry.getDirection(options), msg));
 				}
 			}
 
@@ -387,19 +410,23 @@ public class Synchronization {
 					LOGGER.log(Level.FINE, "Deleting local directory '" + file.getAbsolutePath() + "' because it does not exist remote.");
 					try {
 						fileSystemAdapter.deleteDirectorySubtree(file.toPath());
-						ReportFactory.getInstance(options).log(new ReportEntry(file.getAbsolutePath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Deleted));
+						ReportFactory.getInstance(options).log(new ReportEntry(file.getAbsolutePath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Deleted, ReportEntry.getDirection(options)));
 					} catch (IOException e) {
-						LOGGER.log(Level.WARNING, "Could not delete directory '" + file.getAbsolutePath() + "': " + e.getMessage(), e);
-						ReportFactory.getInstance(options).log(new ReportEntry(file.getAbsolutePath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped, e.getMessage()));
+						String msg = "Could not delete directory '" + file.getAbsolutePath() + "': " + e.getMessage();
+						LOGGER.log(Level.WARNING, msg, e);
+						ReportFactory.getInstance(options).log(new ReportEntry(file.getAbsolutePath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped_Error, ReportEntry.getDirection(options), msg));
 					}
 				} else {
 					LOGGER.log(Level.FINE, "Deleting local file '" + file.getAbsolutePath() + "' because it does not exist remote.");
-					boolean deleted = fileSystemAdapter.delete(file);
-					if (!deleted) {
-						LOGGER.log(Level.WARNING, "Could not delete file '" + file.getAbsolutePath() + "':.");
-						ReportFactory.getInstance(options).log(new ReportEntry(file.getAbsolutePath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped, "Could not delete file."));
+					SyncAction syncAction = fileSystemAdapter.delete(file);
+					if (syncAction == SyncAction.Error) {
+						String msg = "Could not delete file '" + file.getAbsolutePath() + "'.";
+						LOGGER.log(Level.WARNING, msg);
+						ReportFactory.getInstance(options).log(new ReportEntry(file.getAbsolutePath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped_Error, ReportEntry.getDirection(options), msg));
+					} else if (syncAction == SyncAction.Successful) {
+						ReportFactory.getInstance(options).log(new ReportEntry(file.getAbsolutePath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Deleted, ReportEntry.getDirection(options)));
 					} else {
-						ReportFactory.getInstance(options).log(new ReportEntry(file.getAbsolutePath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Deleted));
+						ReportFactory.getInstance(options).log(new ReportEntry(file.getAbsolutePath(), ReportEntry.Status.Skipped, ReportEntry.Action.Skipped_Deletion, ReportEntry.getDirection(options)));
 					}
 				}
 			}
@@ -409,39 +436,49 @@ public class Synchronization {
 				if (googleDriveAdapter.isDirectory(remoteFile)) {
 					if (fileSystemAdapter.isDirectory(file)) {
 						syncItem.setLocalFile(Optional.of(file));
-						ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Unchanged));
+						ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Unchanged, ReportEntry.getDirection(options)));
 					} else {
 						LOGGER.log(Level.FINE, "Deleting local file '" + file.getAbsolutePath() + " because remote it is a directory.");
-						boolean deleted = fileSystemAdapter.delete(file);
-						if (!deleted) {
-							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped, "Deleting local file failed."));
-							throw new JDriveSyncException(JDriveSyncException.Reason.IOException, "Could not delete local directory '" + file.getAbsolutePath() + "'.");
-						}
-						try {
-							createLocalDir(file, syncItem, remoteFile);
-							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created));
-						} catch (IOException e) {
-							LOGGER.log(Level.WARNING, "Skipping directory '" + syncItem.getPath() + "' because creation of local directory failed: " + e.getMessage(), e);
-							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped, e.getMessage()));
-							return WalkerVisitorResult.SkipSubtree;
+						SyncAction syncAction = fileSystemAdapter.delete(file);
+						if (syncAction == SyncAction.Error) {
+							String msg = "Could not delete local directory '" + file.getAbsolutePath() + "'.";
+							LOGGER.log(Level.SEVERE, msg);
+							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped_Error, ReportEntry.getDirection(options), msg));
+						} else if (syncAction == SyncAction.Successful) {
+							try {
+								createLocalDir(file, syncItem, remoteFile);
+								ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created, ReportEntry.getDirection(options)));
+							} catch (IOException e) {
+								String msg = "Skipping directory '" + syncItem.getPath() + "' because creation of local directory failed: " + e.getMessage();
+								LOGGER.log(Level.WARNING, msg, e);
+								ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped_Error, ReportEntry.getDirection(options), msg));
+								return WalkerVisitorResult.SkipSubtree;
+							}
+						} else {
+							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Skipped, ReportEntry.Action.Skipped_Deletion, ReportEntry.getDirection(options)));
 						}
 					}
 				} else {
 					if (fileSystemAdapter.isDirectory(file)) {
 						LOGGER.log(Level.FINE, "Deleting local directory '" + syncItem.getPath() + "' because remote it is a file.");
-						boolean deleted = fileSystemAdapter.delete(file);
-						if (!deleted) {
-							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped, "Deleting local file failed."));
-							throw new JDriveSyncException(JDriveSyncException.Reason.IOException, "Could not delete local directory '" + file.getAbsolutePath() + "'.");
-						}
-						LOGGER.log(Level.FINE, "Downloading file '" + syncItem.getPath() + "'.");
-						try {
-							InputStream stream = googleDriveAdapter.downloadFile(syncItem);
-							fileSystemAdapter.storeFile(stream, syncItem);
-							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created));
-						} catch (Exception e) {
-							LOGGER.log(Level.SEVERE, "Failed to store file '" + syncItem.getPath() + "': " + e.getMessage());
-							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped));
+						SyncAction syncAction = fileSystemAdapter.delete(file);
+						if (syncAction == SyncAction.Error) {
+							String msg = "Could not delete local directory '" + file.getAbsolutePath() + "'.";
+							LOGGER.log(Level.SEVERE, msg);
+							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped_Error, ReportEntry.getDirection(options), msg));
+						} else if (syncAction == SyncAction.Successful) {
+							LOGGER.log(Level.FINE, "Downloading file '" + syncItem.getPath() + "'.");
+							try {
+								InputStream stream = googleDriveAdapter.downloadFile(syncItem);
+								fileSystemAdapter.storeFile(stream, syncItem);
+								ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created, ReportEntry.getDirection(options)));
+							} catch (Exception e) {
+								String msg = "Failed to store file '" + syncItem.getPath() + "': " + e.getMessage();
+								LOGGER.log(Level.SEVERE, msg);
+								ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped_Error, ReportEntry.getDirection(options), msg));
+							}
+						} else {
+							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Skipped, ReportEntry.Action.Skipped_Deletion, ReportEntry.getDirection(options)));
 						}
 					} else {
 						if (options.isUseChecksum()) {
@@ -462,11 +499,12 @@ public class Synchronization {
 								} else {
 									syncItem.setLocalFile(Optional.of(file));
 									LOGGER.log(Level.FINE, "Last modification dates and sizes are equal for file '" + syncItem.getPath() + "' (local: " + DATE_FORMAT.format(new Date(localLastModifiedTime.toMillis())) + ", " + sizeLocal + " bytes; remote: " + DATE_FORMAT.format(new Date(remoteFileModifiedDate.getValue())) + ", " + sizeRemote + " bytes). Not updating file.");
-									ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Unchanged));
+									ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Unchanged, ReportEntry.getDirection(options)));
 								}
 							} catch (IOException e) {
-								LOGGER.log(Level.FINE, "Skipping file '" + syncItem.getPath() + " because reading local file attributes failed: " + e.getMessage(), e);
-								ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped, e.getMessage()));
+								String msg = "Skipping file '" + syncItem.getPath() + " because reading local file attributes failed: " + e.getMessage();
+								LOGGER.log(Level.FINE, msg, e);
+								ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped_Error, ReportEntry.getDirection(options), msg));
 							}
 						}
 					}
@@ -489,14 +527,15 @@ public class Synchronization {
 					syncItem.setLocalFile(Optional.of(file));
 					if (!updateMetadata) {
 						LOGGER.log(Level.FINE, "Not downloading file '" + syncItem.getPath() + "' because MD5 checksums are equal (local: " + localFileMd5Checksum + ", remote: " + remoteFileMd5Checksum + ").");
-						ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Unchanged));
+						ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Unchanged, ReportEntry.getDirection(options)));
 					} else {
 						try {
 							fileSystemAdapter.setLastModifiedTime(file, remoteFile.getModifiedDate().getValue());
-							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.UpdatedMetadata));
+							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.UpdatedMetadata, ReportEntry.getDirection(options)));
 						} catch (IOException e) {
-							LOGGER.log(Level.WARNING, "Could not update last modification date of local file '" + file.getAbsolutePath() + "':" + e.getMessage(), e);
-							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped, e.getMessage()));
+							String msg = "Could not update last modification date of local file '" + file.getAbsolutePath() + "':" + e.getMessage();
+							LOGGER.log(Level.WARNING, msg, e);
+							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped_Error, ReportEntry.getDirection(options), msg));
 						}
 					}
 				} else {
@@ -504,10 +543,11 @@ public class Synchronization {
 					try {
 						InputStream stream = googleDriveAdapter.downloadFile(syncItem);
 						fileSystemAdapter.storeFile(stream, syncItem);
-						ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Updated));
+						ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Updated, ReportEntry.getDirection(options)));
 					} catch (Exception e) {
-						LOGGER.log(Level.SEVERE, "Failed to store file '" + syncItem.getPath() + "': " + e.getMessage());
-						ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped));
+						String msg = "Failed to store file '" + syncItem.getPath() + "': " + e.getMessage();
+						LOGGER.log(Level.SEVERE, msg);
+						ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped_Error, ReportEntry.getDirection(options), msg));
 					}
 				}
 			}
