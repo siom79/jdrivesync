@@ -2,7 +2,7 @@
 
 jdrivesync is a simple command line tool that synchronizes a local file system structure to your Google Drive (and back):
 
-    java -jar jdrivesync-0.2.4-jar-with-dependencies.jar -l "/home/siom79"
+    java -jar jdrivesync-0.3.0-jar-with-dependencies.jar -l "/home/siom79"
 
 ##Motivation##
 Having a backup of your documents and pictures at some remote site is valuable. Google Drive
@@ -52,7 +52,7 @@ It does not utilize any application-specific metadata. Hence you can start worki
 
 There is a debian package available. It can be installed using the following command:
 
-    sudo dpkg -i jdrivesync_0.2.4_all.deb
+    sudo dpkg -i jdrivesync_0.3.0_all.deb
 
 Please note that jdrivesync requires openjdk-8-jre. How to install openjdk in version 8 for Ubuntu <14.10 is explained
 [here](http://askubuntu.com/questions/464755/how-to-install-openjdk-8-on-14-04-lts).
@@ -106,7 +106,7 @@ The following options can be passed on the command line:
 
 Hence a simple upload synchronization of your file collection under /home/user/documents will be done with:
 
-    java -jar jdrivesync-0.2.4-jar-with-dependencies.jar -u -l "/home/user/documents"
+    java -jar jdrivesync-0.3.0-jar-with-dependencies.jar -u -l "/home/user/documents"
 
 When you start jdrivesync for the first time it will print an authentication URL. You will have to point your browser
 to this URL, login with your Google account and grant jdrivesync the requested privileges. After having clicked on
@@ -117,13 +117,13 @@ Now jdrivesync will create a file called .jdrivesync in your home directory. Thi
 As long as jdrivesync will find a valid authentication file in your home directory, it will use it. When you
 want to use an alternative file, you can specify that on the command line:
 
-     java -jar jdrivesync-0.2.4-jar-with-dependencies.jar -u -l "/home/user/documents" -a "my-auth-file.properties"
+     java -jar jdrivesync-0.3.0-jar-with-dependencies.jar -u -l "/home/user/documents" -a "my-auth-file.properties"
 
 You can also exclude certain files from being uploaded/downloaded. Just create a text document that contains file name
 patterns and provide the path to this file using the option -i:
 
-    java -jar jdrivesync-0.2.4-jar-with-dependencies.jar -u -l "/home/user/documents" -i .jdrivesyncignore
-    
+    java -jar jdrivesync-0.3.0-jar-with-dependencies.jar -u -l "/home/user/documents" -i .jdrivesyncignore
+
 The patterns should follow these rules:
 * Blank lines are ignored.
 * Leading and trailing spaces are ignored.
@@ -166,7 +166,7 @@ mvn install
 After successful compilation you can execute jdrivesync with this command:
 
 ```
-java -jar target/jdrivesync-0.2.4-jar-with-dependencies.jar
+java -jar target/jdrivesync-0.3.0-jar-with-dependencies.jar
 ```
 
 The deb package is created with the maven plugin [jdeb](https://github.com/tcurdt/jdeb) during the build and is located in the `target`
