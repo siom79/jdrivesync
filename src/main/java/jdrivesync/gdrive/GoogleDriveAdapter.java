@@ -191,7 +191,7 @@ public class GoogleDriveAdapter {
 			if (isGoogleAppsDocument(remoteFile)) {
 				return;
 			}
-			LOGGER.log(Level.FINE, "Updating file " + remoteFile.getId() + " (" + syncItem.getPath() + ").");
+			LOGGER.log(Level.INFO, "Updating file " + remoteFile.getId() + " (" + syncItem.getPath() + ").");
 			if (!options.isDryRun()) {
 				Drive.Files.Update updateRequest = drive.files().update(remoteFile.getId(), remoteFile, new FileContent(determineMimeType(localFile), localFile));
 				updateRequest.setSetModifiedDate(true);
@@ -254,7 +254,7 @@ public class GoogleDriveAdapter {
 			remoteFile.setParents(createParentReferenceList(syncFile));
 			BasicFileAttributes attr = Files.readAttributes(localFile.toPath(), BasicFileAttributes.class);
 			remoteFile.setModifiedDate(new DateTime(attr.lastModifiedTime().toMillis()));
-			LOGGER.log(Level.FINE, "Inserting new file '" + syncFile.getPath() + "' (" + bytesWithUnit(attr.size()) + ").");
+			LOGGER.log(Level.INFO, "Uploading new file '" + syncFile.getPath() + "' (" + bytesWithUnit(attr.size()) + ").");
 			if (!options.isDryRun()) {
 				long startMillis = System.currentTimeMillis();
 				File insertedFile;
@@ -277,8 +277,7 @@ public class GoogleDriveAdapter {
 			if (inputStream != null) {
 				try {
 					inputStream.close();
-				} catch (IOException e) {
-				}
+				} catch (IOException ignored) {}
 			}
 		}
 	}
