@@ -16,6 +16,7 @@ import jdrivesync.report.ReportFactory;
 import jdrivesync.walker.WalkerVisitor;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
@@ -280,9 +281,13 @@ public class Synchronization {
 	}
 
 	private String computeMd5Checksum(File file) {
-		try {
+		try (FileInputStream fis = new FileInputStream(file)) {
 			MessageDigest m = MessageDigest.getInstance("MD5");
-			m.update(Files.readAllBytes(file.toPath()));
+			byte[] buffer = new byte[1024];
+			int bytesRead;
+			while ((bytesRead = fis.read(buffer)) != -1) {
+				m.update(buffer, 0, bytesRead);
+			}
 			byte[] digest = m.digest();
 			BigInteger bigInt = new BigInteger(1, digest);
 			String md5String = bigInt.toString(16);
