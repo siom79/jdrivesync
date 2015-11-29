@@ -297,7 +297,7 @@ public class Synchronization {
 			return md5String;
 		} catch (NoSuchAlgorithmException e) {
 			throw new JDriveSyncException(JDriveSyncException.Reason.NoSuchAlgorithmException, "Could not load MD5 implementation: " + e.getMessage(), e);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			throw new JDriveSyncException(JDriveSyncException.Reason.IOException, "Could not compute MD5 hash for file '" + file.getAbsolutePath() + "': " + e.getMessage(), e);
 		}
 	}
@@ -364,7 +364,7 @@ public class Synchronization {
 								try {
 									createLocalDir(newDirectory, syncItem, remoteFile);
 									ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created));
-								} catch (IOException e) {
+								} catch (Exception e) {
 									LOGGER.log(Level.WARNING, "Could not create local directory '" + newDirectory.getAbsolutePath() + "': " + e.getMessage(), e);
 									ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped, e.getMessage()));
 								}
@@ -393,7 +393,7 @@ public class Synchronization {
 					try {
 						fileSystemAdapter.deleteDirectorySubtree(file.toPath());
 						ReportFactory.getInstance(options).log(new ReportEntry(file.getAbsolutePath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Deleted));
-					} catch (IOException e) {
+					} catch (Exception e) {
 						LOGGER.log(Level.WARNING, "Could not delete directory '" + file.getAbsolutePath() + "': " + e.getMessage(), e);
 						ReportFactory.getInstance(options).log(new ReportEntry(file.getAbsolutePath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped, e.getMessage()));
 					}
@@ -425,7 +425,7 @@ public class Synchronization {
 						try {
 							createLocalDir(file, syncItem, remoteFile);
 							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created));
-						} catch (IOException e) {
+						} catch (Exception e) {
 							LOGGER.log(Level.WARNING, "Skipping directory '" + syncItem.getPath() + "' because creation of local directory failed: " + e.getMessage(), e);
 							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped, e.getMessage()));
 							return WalkerVisitorResult.SkipSubtree;
@@ -469,7 +469,7 @@ public class Synchronization {
 									LOGGER.log(Level.FINE, "Last modification dates and sizes are equal for file '" + syncItem.getPath() + "' (local: " + DATE_FORMAT.format(new Date(localLastModifiedTime.toMillis())) + ", " + sizeLocal + " bytes; remote: " + DATE_FORMAT.format(new Date(remoteFileModifiedDate.getValue())) + ", " + sizeRemote + " bytes). Not updating file.");
 									ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Unchanged));
 								}
-							} catch (IOException e) {
+							} catch (Exception e) {
 								LOGGER.log(Level.FINE, "Skipping file '" + syncItem.getPath() + " because reading local file attributes failed: " + e.getMessage(), e);
 								ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped, e.getMessage()));
 							}
@@ -499,7 +499,7 @@ public class Synchronization {
 						try {
 							fileSystemAdapter.setLastModifiedTime(file, remoteFile.getModifiedDate().getValue());
 							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.UpdatedMetadata));
-						} catch (IOException e) {
+						} catch (Exception e) {
 							LOGGER.log(Level.WARNING, "Could not update last modification date of local file '" + file.getAbsolutePath() + "':" + e.getMessage(), e);
 							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Error, ReportEntry.Action.Skipped, e.getMessage()));
 						}
