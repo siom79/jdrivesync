@@ -9,6 +9,7 @@ Having a backup of your documents and pictures at some remote site is valuable. 
 comes with a good cost/performance ratio and provides a feature-rich web interface to search and browse files.
 
 Google also offers a client application that allows you to synchronize your files to the cloud. But it has a few limitations:
+
 * It is only available for Windows/MacOS (and not for Linux).
 * You can only use it with one Google account.
 * Only synchronizes one local directory.

@@ -63,30 +63,34 @@ public class FileSystemAdapter {
 
 	public void deleteDirectorySubtree(Path path) throws IOException {
 		if (Files.exists(path)) {
-			LOGGER.log(Level.FINE, "Deleting subtree '" + path + "'.");
-			if (!options.isDryRun()) {
-				Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
-					@Override
-					public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-						LOGGER.log(Level.FINE, "Deleting file '" + file + "'.");
-						delete(file.toFile());
-						return FileVisitResult.CONTINUE;
-					}
+			if (!isTrashDir(path.toFile())) {
+				LOGGER.log(Level.FINE, "Deleting subtree '" + path + "'.");
+				if (!options.isDryRun()) {
+					Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+						@Override
+						public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+							LOGGER.log(Level.FINE, "Deleting file '" + file + "'.");
+							delete(file.toFile());
+							return FileVisitResult.CONTINUE;
+						}
 
-					@Override
-					public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-						LOGGER.log(Level.FINE, "Deleting directory '" + dir + "'.");
-						delete(dir.toFile());
-						return FileVisitResult.CONTINUE;
-					}
-				});
+						@Override
+						public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+							LOGGER.log(Level.FINE, "Deleting directory '" + dir + "'.");
+							delete(dir.toFile());
+							return FileVisitResult.CONTINUE;
+						}
+					});
+				}
+			} else {
+				LOGGER.log(Level.FINE, "Not deleting subtree '" + path + "' because it is the trash dir.");
 			}
 		}
 	}
 
 	public boolean delete(File file) {
 		boolean deleted = false;
-		if (TRASH.equals(file.getName()) && file.getParentFile() != null && file.getParentFile().equals(options.getLocalRootDir().get())) {
+		if (isTrashDir(file)) {
 			LOGGER.log(Level.FINE, "Not deleting file '" + file.getAbsolutePath() + "' because it is our trash bin.");
 		} else {
 			if (options.isNoDelete()) {
@@ -109,7 +113,7 @@ public class FileSystemAdapter {
 								Files.createDirectories(targetParent);
 							}
 							LOGGER.log(Level.FINE, "Moving file '" + file.getAbsolutePath() + "' to trash bin ('" + target + "').");
-							Files.move(file.toPath(), target);
+							Files.move(file.toPath(), target, StandardCopyOption.REPLACE_EXISTING);
 							deleted = true;
 						}
 					} catch (Exception e) {
@@ -119,6 +123,10 @@ public class FileSystemAdapter {
 			}
 		}
 		return deleted;
+	}
+
+	private boolean isTrashDir(File file) {
+		return TRASH.equals(file.getName()) && file.getParentFile() != null && file.getParentFile().equals(options.getLocalRootDir().get());
 	}
 
 	private Path createTrashDir() throws IOException {
