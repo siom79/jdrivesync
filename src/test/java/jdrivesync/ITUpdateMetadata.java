@@ -49,6 +49,6 @@ public class ITUpdateMetadata extends BaseClass {
 		FileTime newTimestamp = FileTime.fromMillis(newMillis);
 		Files.setLastModifiedTime(Paths.get(basePathTestData(), TEST_DATA_UP, "file.bin"), newTimestamp);
 		app.sync(options);
-		assertThat(googleDriveAdapter.search(Optional.of("file.bin")).get(0).getModifiedDate().getValue(), is(newMillis));
+		assertThat(googleDriveAdapter.search(Optional.of("file.bin")).get(0).getModifiedTime().getValue(), is(newMillis));
 	}
 }

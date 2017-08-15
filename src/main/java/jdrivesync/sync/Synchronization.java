@@ -60,7 +60,7 @@ public class Synchronization {
 						List<com.google.api.services.drive.model.File> children = googleDriveAdapter.listChildren(parentId);
 						for (com.google.api.services.drive.model.File remoteChild : children) {
 							try {
-								String title = remoteChild.getTitle();
+								String title = remoteChild.getName();
 								SyncItem syncItemFound = null;
 								Iterator<SyncItem> childrenIterator = syncDirectory.getChildrenIterator();
 								while (childrenIterator.hasNext()) {
@@ -123,14 +123,14 @@ public class Synchronization {
 			}
 
 			private void processRemoteChildNotFound(com.google.api.services.drive.model.File remoteChild, SyncDirectory syncDirectory) {
-				LOGGER.log(Level.FINE, "Deleting remote file/directory '" + remoteChild.getTitle() + "' because locally it does not exist any more.");
+				LOGGER.log(Level.FINE, "Deleting remote file/directory '" + remoteChild.getName() + "' because locally it does not exist any more.");
 				if (googleDriveAdapter.isDirectory(remoteChild)) {
 					googleDriveAdapter.deleteDirectory(remoteChild);
-					ReportFactory.getInstance(options).log(new ReportEntry(syncDirectory.getPath() + "/" + remoteChild.getTitle(), ReportEntry.Status.Synchronized, ReportEntry.Action.Deleted));
+					ReportFactory.getInstance(options).log(new ReportEntry(syncDirectory.getPath() + "/" + remoteChild.getName(), ReportEntry.Status.Synchronized, ReportEntry.Action.Deleted));
 				} else {
 					if (!googleDriveAdapter.isGoogleAppsDocument(remoteChild)) {
 						googleDriveAdapter.deleteFile(remoteChild);
-						ReportFactory.getInstance(options).log(new ReportEntry(syncDirectory.getPath() + "/" + remoteChild.getTitle(), ReportEntry.Status.Synchronized, ReportEntry.Action.Deleted));
+						ReportFactory.getInstance(options).log(new ReportEntry(syncDirectory.getPath() + "/" + remoteChild.getName(), ReportEntry.Status.Synchronized, ReportEntry.Action.Deleted));
 					}
 				}
 			}
@@ -139,7 +139,7 @@ public class Synchronization {
 				SyncItem syncItemFound = null;
 				if (googleDriveAdapter.isDirectory(remoteChild)) {
 					if (!(syncItem instanceof SyncDirectory)) {
-						LOGGER.log(Level.FINE, "Deleting remote directory '" + remoteChild.getTitle() + "' because locally it is a file (" + syncItem.getPath() + ").");
+						LOGGER.log(Level.FINE, "Deleting remote directory '" + remoteChild.getName() + "' because locally it is a file (" + syncItem.getPath() + ").");
 						googleDriveAdapter.deleteDirectory(remoteChild);
 						if (syncItem instanceof SyncFile) {
 							SyncFile syncFile = (SyncFile) syncItem;
@@ -156,7 +156,7 @@ public class Synchronization {
 				} else {
 					if (syncItem instanceof SyncDirectory) {
 						if (!googleDriveAdapter.isGoogleAppsDocument(remoteChild)) {
-							LOGGER.log(Level.FINE, "Deleting remote file '" + remoteChild.getTitle() + "' because locally it is a directory (" + syncItem.getPath() + ").");
+							LOGGER.log(Level.FINE, "Deleting remote file '" + remoteChild.getName() + "' because locally it is a directory (" + syncItem.getPath() + ").");
 							googleDriveAdapter.deleteFile(remoteChild);
 							googleDriveAdapter.store((SyncDirectory) syncItem);
 							syncItem.setRemoteFile(Optional.of(remoteChild));
@@ -172,9 +172,9 @@ public class Synchronization {
 						} else {
 							BasicFileAttributes attr = Files.readAttributes(localFile.toPath(), BasicFileAttributes.class);
 							FileTime modifiedDateLocal = attr.lastModifiedTime();
-							DateTime modifiedDateRemote = remoteChild.getModifiedDate();
+							DateTime modifiedDateRemote = remoteChild.getModifiedTime();
 							long sizeLocal = attr.size();
-							Long sizeRemote = remoteChild.getFileSize() == null ? 0L : remoteChild.getFileSize();
+							Long sizeRemote = remoteChild.getSize() == null ? 0L : remoteChild.getSize();
 							if (!datesAreEqual(modifiedDateLocal.toMillis(), modifiedDateRemote.getValue(), syncItem)) {
 								LOGGER.log(Level.FINE, "Last modification dates are not equal for file '" + syncItemFound.getPath() + "' (local: " + DATE_FORMAT.format(new Date(modifiedDateLocal.toMillis())) + "; remote: " + DATE_FORMAT.format(new Date(modifiedDateRemote.getValue())) + "). Checking MD5 checksums.");
 								performChecksumCheck(syncItemFound, localFile, true);
@@ -236,7 +236,7 @@ public class Synchronization {
 					com.google.api.services.drive.model.File foundRemoteDir = null;
 					List<com.google.api.services.drive.model.File> remoteChildren = googleDriveAdapter.listChildren(currentRemoteDir.getId());
 					for (com.google.api.services.drive.model.File remoteChild : remoteChildren) {
-						if (remoteDirectory.equals(remoteChild.getTitle())) {
+						if (remoteDirectory.equals(remoteChild.getName())) {
 							if (googleDriveAdapter.isDirectory(remoteChild)) {
 								foundRemoteDir = remoteChild;
 							} else {
@@ -332,7 +332,7 @@ public class Synchronization {
 							Iterator<SyncItem> childrenIterator = syncDirectory.getChildrenIterator();
 							while (childrenIterator.hasNext()) {
 								SyncItem syncItem = childrenIterator.next();
-								if (syncItem.getRemoteFile().isPresent() && syncItem.getRemoteFile().get().getTitle().equals(file.getName())) {
+								if (syncItem.getRemoteFile().isPresent() && syncItem.getRemoteFile().get().getName().equals(file.getName())) {
 									syncItemFound = syncItem;
 									result = processRemoteChildFound(file, syncItem);
 									break;
@@ -360,7 +360,7 @@ public class Synchronization {
 						if (!syncItem.getLocalFile().isPresent()) {
 							com.google.api.services.drive.model.File remoteFile = syncItem.getRemoteFile().get();
 							if (googleDriveAdapter.isDirectory(remoteFile)) {
-								File newDirectory = new File(fileDirectory, remoteFile.getTitle());
+								File newDirectory = new File(fileDirectory, remoteFile.getName());
 								try {
 									createLocalDir(newDirectory, syncItem, remoteFile);
 									ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Created));
@@ -452,12 +452,12 @@ public class Synchronization {
 						if (options.isUseChecksum()) {
 							performChecksumCheck(file, syncItem, remoteFile, false);
 						} else {
-							DateTime remoteFileModifiedDate = remoteFile.getModifiedDate();
+							DateTime remoteFileModifiedDate = remoteFile.getModifiedTime();
 							try {
 								BasicFileAttributes attr = fileSystemAdapter.readAttributes(file);
 								FileTime localLastModifiedTime = attr.lastModifiedTime();
 								long sizeLocal = attr.size();
-								long sizeRemote = remoteFile.getFileSize() == null ? 0L : remoteFile.getFileSize();
+								long sizeRemote = remoteFile.getSize() == null ? 0L : remoteFile.getSize();
 								if (!datesAreEqual(localLastModifiedTime.toMillis(), remoteFileModifiedDate.getValue(), syncItem)) {
 									LOGGER.log(Level.FINE, "Last modification dates are not equal for file '" + syncItem.getPath() + "' (local: " + DATE_FORMAT.format(new Date(localLastModifiedTime.toMillis())) + "; remote: " + DATE_FORMAT.format(new Date(remoteFileModifiedDate.getValue())) + "). Checking MD5 checksums.");
 									performChecksumCheck(file, syncItem, remoteFile, true);
@@ -482,7 +482,7 @@ public class Synchronization {
 			private void createLocalDir(File newDirectory, SyncItem syncItem, com.google.api.services.drive.model.File remoteFile) throws IOException {
 				LOGGER.log(Level.FINE, "Creating local directory '" + syncItem.getPath() + "'.");
 				Path newLocalDir = fileSystemAdapter.createDirectory(newDirectory);
-				DateTime lastModifiedDateTime = remoteFile.getModifiedDate();
+				DateTime lastModifiedDateTime = remoteFile.getModifiedTime();
 				fileSystemAdapter.setLastModifiedTime(newLocalDir.toFile(), lastModifiedDateTime.getValue());
 				syncItem.setLocalFile(Optional.of(newLocalDir.toFile()));
 			}
@@ -497,7 +497,7 @@ public class Synchronization {
 						ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.Unchanged));
 					} else {
 						try {
-							fileSystemAdapter.setLastModifiedTime(file, remoteFile.getModifiedDate().getValue());
+							fileSystemAdapter.setLastModifiedTime(file, remoteFile.getModifiedTime().getValue());
 							ReportFactory.getInstance(options).log(new ReportEntry(syncItem.getPath(), ReportEntry.Status.Synchronized, ReportEntry.Action.UpdatedMetadata));
 						} catch (Exception e) {
 							LOGGER.log(Level.WARNING, "Could not update last modification date of local file '" + file.getAbsolutePath() + "':" + e.getMessage(), e);

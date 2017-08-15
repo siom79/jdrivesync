@@ -32,7 +32,11 @@ public class CliParser {
 		NetworkSleepBetweenRetries(null, "--network-sleep-between-retries", "The number of seconds to sleep between retries (default: 10)."),
 		Verbose("-v", "--verbose", "Verbose output"),
 		LogFile(null, "--log-file", "The location for the log file.", "<log-file>"),
-		NoDelete(null, "--no-delete", "Do not delete files.");
+		NoDelete(null, "--no-delete", "Do not delete files."),
+		Doc(null,"--doc", "Google doc export/import format (default:Open Office doc).","application/vnd.oasis.opendocument.text"),
+		Sheets(null,"--sheet","Google sheet export/import format (default:Open Office sheet).","application/x-vnd.oasis.opendocument.spreadsheet"),
+		Slides(null,"--slides","Google slides export/import format (default:Open Office presentation).","application/vnd.oasis.opendocument.presentation"),
+		Drowing(null,"--drowing","Google drowing export/import format (default:JPEG).","image/jpeg");
 		//Password("-p", "--password", "The password used to encrypt/decrypt the files.", "<password>"),
 		//EncryptFile("-e", "--encrypt-files", "Provides a file with newline separated file and/or path name patterns that should be encrypted.", "<encrypt-file>");
 		private final String shortOption;
@@ -191,6 +195,18 @@ public class CliParser {
 				options.setLogFile(Optional.of(path));
 			} else if (argument == Argument.NoDelete) {
 				options.setNoDelete(true);
+			} else if (argument == Argument.Doc) {
+				String docExportMimeType = getOptionWithArgument(arg, sae);
+				options.setDocMimeType(Optional.of(docExportMimeType));
+			} else if (argument == Argument.Sheets) {
+				String sheetsExportMimeType = getOptionWithArgument(arg, sae);
+				options.setDocMimeType(Optional.of(sheetsExportMimeType));
+			} else if (argument == Argument.Slides) {
+				String slidesExportMimeType = getOptionWithArgument(arg, sae);
+				options.setDocMimeType(Optional.of(slidesExportMimeType));
+			} else if (argument == Argument.Drowing) {
+				String drowingExportMimeType = getOptionWithArgument(arg, sae);
+				options.setDrowingMimeType(Optional.of(drowingExportMimeType));
 			} else {
 				throw new JDriveSyncException(JDriveSyncException.Reason.InvalidCliParameter, "The parameter '" + arg + "' is not valid.");
 			}

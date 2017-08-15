@@ -58,12 +58,12 @@ public class ITChunkedUpload extends BaseClass {
 		assertThat(googleDriveAdapter.listAll().size(), is(3));
 		List<File> resultList = googleDriveAdapter.search(Optional.of(TWO_MB_PLUS_1 + ".bin"));
 		assertThat(resultList.size(), is(1));
-		assertThat(resultList.get(0).getFileSize().intValue(), is(TWO_MB_PLUS_1));
+		assertThat(resultList.get(0).getSize().intValue(), is(TWO_MB_PLUS_1));
 		resultList = googleDriveAdapter.search(Optional.of(TWO_MB + ".bin"));
 		assertThat(resultList.size(), is(1));
-		assertThat(resultList.get(0).getFileSize().intValue(), is(TWO_MB));
+		assertThat(resultList.get(0).getSize().intValue(), is(TWO_MB));
 		resultList = googleDriveAdapter.search(Optional.of(ONE_MB + ".bin"));
 		assertThat(resultList.size(), is(1));
-		assertThat(resultList.get(0).getFileSize().intValue(), is(ONE_MB));
+		assertThat(resultList.get(0).getSize().intValue(), is(ONE_MB));
 	}
 }
