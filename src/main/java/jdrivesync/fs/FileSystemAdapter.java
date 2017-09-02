@@ -160,19 +160,19 @@ public class FileSystemAdapter {
 					SyncDirectory parentSyncDir = syncItem.getParent().get();
 					if (parentSyncDir.getLocalFile().isPresent()) {
 						java.io.File parentFile = parentSyncDir.getLocalFile().get();
-						java.io.File newFile = new java.io.File(parentFile, remoteFileOptional.get().getTitle());
+						java.io.File newFile = new java.io.File(parentFile, remoteFileOptional.get().getName());
 						copyStreamToFile(inputStream, newFile);
 						syncItem.setLocalFile(Optional.of(newFile));
-						setLastModifiedTime(newFile, remoteFile.getModifiedDate().getValue());
+						setLastModifiedTime(newFile, remoteFile.getModifiedTime().getValue());
 					} else {
 						LOGGER.log(Level.WARNING, "Cannot create file '" + syncItem.getPath() + "' because local file is not present.");
 					}
 				} else {
 					java.io.File parentFile = options.getLocalRootDir().get();
-					java.io.File newFile = new java.io.File(parentFile, remoteFileOptional.get().getTitle());
+					java.io.File newFile = new java.io.File(parentFile, remoteFileOptional.get().getName());
 					copyStreamToFile(inputStream, newFile);
 					syncItem.setLocalFile(Optional.of(newFile));
-					setLastModifiedTime(newFile, remoteFile.getModifiedDate().getValue());
+					setLastModifiedTime(newFile, remoteFile.getModifiedTime().getValue());
 				}
 			} else {
 				LOGGER.log(Level.WARNING, "Cannot create file '" + syncItem.getPath() + "' because remote file is not present.");

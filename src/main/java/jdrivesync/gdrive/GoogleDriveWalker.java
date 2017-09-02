@@ -47,7 +47,7 @@ public class GoogleDriveWalker implements Walker {
                 File foundRemoteDir = null;
                 List<File> remoteChildren = googleDriveAdapter.listChildren(currentRemoteDir.getId());
                 for (File remoteChild : remoteChildren) {
-                    if (remoteChild.getTitle().equals(pathPart)) {
+                    if (remoteChild.getName().equals(pathPart)) {
                         if (googleDriveAdapter.isDirectory(remoteChild)) {
                             foundRemoteDir = remoteChild;
                         } else {
@@ -70,7 +70,7 @@ public class GoogleDriveWalker implements Walker {
             File remoteFile = syncDirectory.getRemoteFile().get();
             List<File> remoteChildren = googleDriveAdapter.listChildren(remoteFile.getId());
             for (File file : remoteChildren) {
-                if (!googleDriveAdapter.isGoogleAppsDocument(file) && googleDriveAdapter.fileNameValid(file)) {
+                if (googleDriveAdapter.isGoogleAppsDocumentforExport(file) && googleDriveAdapter.fileNameValid(file)) {
 					String relativePath = toRelativePath(file, syncDirectory);
 					if (googleDriveAdapter.isDirectory(file)) {
 						if (!fileShouldBeIgnored(relativePath, true, file)) {
@@ -104,10 +104,10 @@ public class GoogleDriveWalker implements Walker {
 
     private String toRelativePath(File file, SyncDirectory syncDirectory) {
         if (syncDirectory.isRootDirectory()) {
-            return "/" + file.getTitle();
+            return "/" + file.getName();
         } else {
             String parentPath = syncDirectory.getPath();
-            return parentPath + "/" + file.getTitle();
+            return parentPath + "/" + file.getName();
         }
     }
 
@@ -118,7 +118,7 @@ public class GoogleDriveWalker implements Walker {
         }
         if (!matches && options.getMaxFileSize().isPresent()) {
             if (!googleDriveAdapter.isDirectory(file)) {
-                Long fileSize = file.getFileSize();
+                Long fileSize = file.getSize();
                 Long maxFileSize = options.getMaxFileSize().get();
                 if (maxFileSize.compareTo(fileSize) < 0) {
                     matches = true;

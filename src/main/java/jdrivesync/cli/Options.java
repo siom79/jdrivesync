@@ -27,7 +27,11 @@ public class Options {
     private boolean verbose = false;
     private Optional<Path> logFile = Optional.empty();
     private boolean noDelete = false;
-
+    private Optional<String> docMimeType = Optional.of("application/vnd.oasis.opendocument.text");
+    private Optional<String> sheetsMimeType = Optional.of("application/x-vnd.oasis.opendocument.spreadsheet");
+    private Optional<String> slidesMimeType = Optional.of("application/vnd.oasis.opendocument.presentation");
+    private Optional<String> drowingMimeType = Optional.of("image/jpeg");
+    
     public long getNetworkSleepBetweenAttempts() {
         return networkSleepBetweenAttempts;
     }
@@ -198,4 +202,36 @@ public class Options {
     public boolean isNoDelete() {
         return noDelete;
     }
+
+	public Optional<String> getDocMimeType() {
+		return docMimeType;
+	}
+
+	public void setDocMimeType(Optional<String> docMimeType) {
+		this.docMimeType = docMimeType;
+	}
+
+	public Optional<String> getSheetsMimeType() {
+		return sheetsMimeType;
+	}
+
+	public void setSheetsMimeType(Optional<String> sheetsMimeType) {
+		this.sheetsMimeType = sheetsMimeType;
+	}
+
+	public Optional<String> getSlidesMimeType() {
+		return slidesMimeType;
+	}
+
+	public void setSlidesMimeType(Optional<String> slidesMimeType) {
+		this.slidesMimeType = slidesMimeType;
+	}
+
+	public Optional<String> getDrowingMimeType() {
+		return drowingMimeType;
+	}
+
+	public void setDrowingMimeType(Optional<String> drowingMimeType) {
+		this.drowingMimeType = drowingMimeType;
+	}
 }

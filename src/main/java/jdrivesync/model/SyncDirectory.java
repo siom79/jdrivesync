@@ -19,11 +19,11 @@ public class SyncDirectory extends SyncItem {
             if(o1.getLocalFile().isPresent() && o2.getLocalFile().isPresent()) {
                 return o1.getLocalFile().get().getName().compareTo(o2.getLocalFile().get().getName());
             } else if(o1.getRemoteFile().isPresent() && o2.getRemoteFile().isPresent()) {
-                return o1.getRemoteFile().get().getTitle().compareTo(o2.getRemoteFile().get().getTitle());
+                return o1.getRemoteFile().get().getName().compareTo(o2.getRemoteFile().get().getName());
             } else if(o1.getLocalFile().isPresent() && o2.getRemoteFile().isPresent()) {
-                return o1.getLocalFile().get().getName().compareTo(o2.getRemoteFile().get().getTitle());
+                return o1.getLocalFile().get().getName().compareTo(o2.getRemoteFile().get().getName());
             } else if(o2.getLocalFile().isPresent() && o1.getRemoteFile().isPresent()) {
-                return o2.getLocalFile().get().getName().compareTo(o1.getRemoteFile().get().getTitle());
+                return o2.getLocalFile().get().getName().compareTo(o1.getRemoteFile().get().getName());
             }
             return 0;
         });

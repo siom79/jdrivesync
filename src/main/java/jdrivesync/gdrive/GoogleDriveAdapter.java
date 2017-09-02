@@ -6,9 +6,10 @@ import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.util.DateTime;
 import com.google.api.client.util.Lists;
 import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.Drive.Files.Export;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
-import com.google.api.services.drive.model.ParentReference;
+//import com.google.api.services.drive.model.ParentReference;
 import jdrivesync.cli.Options;
 import jdrivesync.constants.Constants;
 import jdrivesync.encryption.Encryption;
@@ -37,11 +38,19 @@ public class GoogleDriveAdapter {
 	private final DriveFactory driveFactory;
 	private final Encryption encryption;
 
+	private final Map<String,Optional<String>> supportedGooglMimeType;
+	
 	public GoogleDriveAdapter(Credential credential, Options options, DriveFactory driveFactory) {
 		this.credential = credential;
 		this.options = options;
 		this.driveFactory = driveFactory;
 		this.encryption = new Encryption(options);
+		this.supportedGooglMimeType = new HashMap<>();
+		supportedGooglMimeType.put("application/vnd.google-apps.document",options.getDocMimeType());
+		supportedGooglMimeType.put("application/vnd.google-apps.presentation",options.getSlidesMimeType());
+		supportedGooglMimeType.put("application/vnd.google-apps.spreadsheet",options.getSheetsMimeType());
+		supportedGooglMimeType.put("application/vnd.google-apps.drawing", options.getDrowingMimeType());
+		supportedGooglMimeType.put("application/vnd.google-apps.folder", Optional.of("application/vnd.google-apps.folder"));
 	}
 
 	public static Credential authorize() {
@@ -58,7 +67,7 @@ public class GoogleDriveAdapter {
 		try {
 			File file = executeWithRetry(options, () -> drive.files().get(id).execute());
 			if (LOGGER.isLoggable(Level.FINE)) {
-				LOGGER.log(Level.FINE, "Got file : " + file.getId() + ":" + file.getTitle());
+				LOGGER.log(Level.FINE, "Got file : " + file.getId() + ":" + file.getName());
 			}
 			return file;
 		} catch (IOException e) {
@@ -70,19 +79,19 @@ public class GoogleDriveAdapter {
 		List<File> resultList = new LinkedList<File>();
 		Drive drive = driveFactory.getDrive(this.credential);
 		try {
-			Drive.Files.List request = drive.files().list();
+			Drive.Files.List request = drive.files().list().setFields("nextPageToken, files");
 			request.setQ("trashed = false and '" + parentId + "' in parents");
-			request.setMaxResults(1000);
+			request.setPageSize(1000);
 			LOGGER.log(Level.FINE, "Listing children of folder " + parentId + ".");
 			do {
 				FileList fileList = executeWithRetry(options, () -> request.execute());
-				List<File> items = fileList.getItems();
+				List<File> items = fileList.getFiles();
 				resultList.addAll(items);
 				request.setPageToken(fileList.getNextPageToken());
 			} while (request.getPageToken() != null && request.getPageToken().length() > 0);
 			if (LOGGER.isLoggable(Level.FINE)) {
 				for (File file : resultList) {
-					LOGGER.log(Level.FINE, "Child of " + parentId + ": " + file.getId() + ";" + file.getTitle() + ";" + file.getMimeType());
+					LOGGER.log(Level.FINE, "Child of " + parentId + ": " + file.getId() + ";" + file.getName() + ";" + file.getMimeType());
 				}
 			}
 			removeDuplicates(resultList);
@@ -97,7 +106,7 @@ public class GoogleDriveAdapter {
 		Iterator<File> iterator = resultList.iterator();
 		while (iterator.hasNext()) {
 			File file = iterator.next();
-			String title = file.getTitle();
+			String title = file.getName();
 			File titleFound = fileNameMap.get(title);
 			if (titleFound == null) {
 				fileNameMap.put(title, file);
@@ -136,7 +145,7 @@ public class GoogleDriveAdapter {
 			} else {
 				LOGGER.log(Level.FINE, "Trashing file " + id + ".");
 				if (!options.isDryRun()) {
-					executeWithRetry(options, () -> drive.files().trash(id).execute());
+					executeWithRetry(options, () -> drive.files().update("{'trashed':true}", file).execute()); //trash(id).execute());
 				}
 			}
 		} catch (IOException e) {
@@ -144,10 +153,20 @@ public class GoogleDriveAdapter {
 		}
 	}
 
+	///
 	public boolean isGoogleAppsDocument(File file) {
 		String mimeType = file.getMimeType();
 		if (mimeType != null && mimeType.startsWith("application/vnd.google-apps") && !mimeType.equals("application/vnd.google-apps.folder")) {
 			LOGGER.log(Level.FINE, "Not touching file " + file.getId() + " because it is a Google Apps document.");
+			return true;
+		}
+		return false;
+	}
+	
+	public boolean isGoogleAppsDocumentforExport(File file) {
+		String mimeType = file.getMimeType();
+		if (mimeType != null && supportedGooglMimeType.containsKey(mimeType)) {
+			LOGGER.log(Level.FINE, "exporting file " + file.getId() + " because it is a Google Apps document.");
 			return true;
 		}
 		return false;
@@ -162,11 +181,20 @@ public class GoogleDriveAdapter {
 
 	public InputStream downloadFile(SyncItem syncItem) {
 		Drive drive = driveFactory.getDrive(this.credential);
+		
 		try {
 			File remoteFile = syncItem.getRemoteFile().get();
-			String downloadUrl = remoteFile.getDownloadUrl();
-			if (downloadUrl != null) {
-				HttpRequest httpRequest = drive.getRequestFactory().buildGetRequest(new GenericUrl(downloadUrl));
+			GenericUrl genericUrl = null;
+			if(isGoogleAppsDocumentforExport(remoteFile)){
+				Optional<String> exportMimeType = supportedGooglMimeType.get(remoteFile.getMimeType());
+				Export export = drive.files().export(remoteFile.getId(), exportMimeType.get());
+				genericUrl = export.buildHttpRequestUrl();
+			}else{
+				genericUrl = drive.files().get(remoteFile.getId()).set("alt", "media").buildHttpRequestUrl();
+			}
+			
+			if (genericUrl != null) {
+				HttpRequest httpRequest = drive.getRequestFactory().buildGetRequest(genericUrl);
 				LOGGER.log(Level.FINE, "Downloading file " + remoteFile.getId() + ".");
 				if (!options.isDryRun()) {
 					HttpResponse httpResponse = executeWithRetry(options, () -> httpRequest.execute());
@@ -187,14 +215,14 @@ public class GoogleDriveAdapter {
 			java.io.File localFile = syncItem.getLocalFile().get();
 			File remoteFile = syncItem.getRemoteFile().get();
 			BasicFileAttributes attr = Files.readAttributes(localFile.toPath(), BasicFileAttributes.class);
-			remoteFile.setModifiedDate(new DateTime(attr.lastModifiedTime().toMillis()));
+			remoteFile.setModifiedTime(new DateTime(attr.lastModifiedTime().toMillis()));
 			if (isGoogleAppsDocument(remoteFile)) {
 				return;
 			}
 			LOGGER.log(Level.INFO, "Updating file " + remoteFile.getId() + " (" + syncItem.getPath() + ").");
 			if (!options.isDryRun()) {
 				Drive.Files.Update updateRequest = drive.files().update(remoteFile.getId(), remoteFile, new FileContent(determineMimeType(localFile), localFile));
-				updateRequest.setSetModifiedDate(true);
+				//updateRequest.setModifiedDate(true);
 				File updatedFile = executeWithRetry(options, () -> updateRequest.execute());
 				syncItem.setRemoteFile(Optional.of(updatedFile));
 			}
@@ -209,14 +237,14 @@ public class GoogleDriveAdapter {
 			java.io.File localFile = syncItem.getLocalFile().get();
 			File remoteFile = syncItem.getRemoteFile().get();
 			BasicFileAttributes attr = Files.readAttributes(localFile.toPath(), BasicFileAttributes.class);
-			remoteFile.setModifiedDate(new DateTime(attr.lastModifiedTime().toMillis()));
+			remoteFile.setModifiedTime(new DateTime(attr.lastModifiedTime().toMillis()));
 			if (isGoogleAppsDocument(remoteFile)) {
 				return;
 			}
 			LOGGER.log(Level.FINE, "Updating metadata of remote file " + remoteFile.getId() + " (" + syncItem.getPath() + ").");
 			if (!options.isDryRun()) {
 				Drive.Files.Update updateRequest = drive.files().update(remoteFile.getId(), remoteFile);
-				updateRequest.setSetModifiedDate(true);
+				//updateRequest.setSetModifiedDate(true);
 				File updatedFile = executeWithRetry(options, () -> updateRequest.execute());
 				syncItem.setRemoteFile(Optional.of(updatedFile));
 			}
@@ -249,11 +277,11 @@ public class GoogleDriveAdapter {
 				inputStream = encryption.encrypt(Files.readAllBytes(localFile.toPath()));
 			}
 			File remoteFile = new File();
-			remoteFile.setTitle(localFile.getName());
+			remoteFile.setName(localFile.getName());
 			remoteFile.setMimeType(mimeType);
 			remoteFile.setParents(createParentReferenceList(syncFile));
 			BasicFileAttributes attr = Files.readAttributes(localFile.toPath(), BasicFileAttributes.class);
-			remoteFile.setModifiedDate(new DateTime(attr.lastModifiedTime().toMillis()));
+			remoteFile.setModifiedTime(new DateTime(attr.lastModifiedTime().toMillis()));
 			LOGGER.log(Level.INFO, "Uploading new file '" + syncFile.getPath() + "' (" + bytesWithUnit(attr.size()) + ").");
 			if (!options.isDryRun()) {
 				long startMillis = System.currentTimeMillis();
@@ -283,7 +311,7 @@ public class GoogleDriveAdapter {
 	}
 
 	public boolean fileNameValid(File file) {
-		String title = file.getTitle();
+		String title = file.getName();
 		if (title == null || title.contains("/") || title.contains("\\")) {
 			return false;
 		}
@@ -513,12 +541,12 @@ public class GoogleDriveAdapter {
 		return sb.toString();
 	}
 
-	private List<ParentReference> createParentReferenceList(SyncItem syncItem) {
+	private List<String> createParentReferenceList(SyncItem syncItem) {
 		if (syncItem.getParent().isPresent()) {
 			SyncDirectory syncItemParent = syncItem.getParent().get();
 			Optional<File> remoteFileOptional = syncItemParent.getRemoteFile();
 			if (remoteFileOptional.isPresent()) {
-				return Arrays.asList(new ParentReference().setId(remoteFileOptional.get().getId()));
+				return Arrays.asList(remoteFileOptional.get().getId());
 			}
 		}
 		return Lists.newArrayList();
@@ -529,14 +557,14 @@ public class GoogleDriveAdapter {
 		try {
 			java.io.File localFile = syncDirectory.getLocalFile().get();
 			File remoteFile = new File();
-			remoteFile.setTitle(localFile.getName());
+			remoteFile.setName(localFile.getName());
 			remoteFile.setMimeType(MIME_TYPE_FOLDER);
 			remoteFile.setParents(createParentReferenceList(syncDirectory));
 			BasicFileAttributes attr = Files.readAttributes(localFile.toPath(), BasicFileAttributes.class);
-			remoteFile.setModifiedDate(new DateTime(attr.lastModifiedTime().toMillis()));
+			remoteFile.setModifiedTime(new DateTime(attr.lastModifiedTime().toMillis()));
 			LOGGER.log(Level.FINE, "Inserting new directory '" + syncDirectory.getPath() + "'.");
 			if (!options.isDryRun()) {
-				File insertedFile = executeWithRetry(options, () -> drive.files().insert(remoteFile).execute());
+				File insertedFile = executeWithRetry(options, () -> drive.files().create(remoteFile).execute());
 				syncDirectory.setRemoteFile(Optional.of(insertedFile));
 			}
 		} catch (IOException e) {
@@ -549,12 +577,12 @@ public class GoogleDriveAdapter {
 		Drive drive = driveFactory.getDrive(this.credential);
 		try {
 			File remoteFile = new File();
-			remoteFile.setTitle(title);
+			remoteFile.setName(title);
 			remoteFile.setMimeType(MIME_TYPE_FOLDER);
-			remoteFile.setParents(Arrays.asList(new ParentReference().setId(parentDirectory.getId())));
+			remoteFile.setParents(Arrays.asList(parentDirectory.getId()));
 			LOGGER.log(Level.FINE, "Creating new directory '" + title + "'.");
 			if (!options.isDryRun()) {
-				returnValue = executeWithRetry(options, () -> drive.files().insert(remoteFile).execute());
+				returnValue = executeWithRetry(options, () -> drive.files().create(remoteFile).execute());
 			}
 		} catch (IOException e) {
 			throw new JDriveSyncException(JDriveSyncException.Reason.IOException, "Failed to create directory: " + e.getMessage(), e);
@@ -574,10 +602,10 @@ public class GoogleDriveAdapter {
 		try {
 			List<File> result = new ArrayList<>();
 			Drive.Files.List request = drive.files().list();
-			request.setMaxResults(1000);
+			request.setPageSize(1000);
 			do {
 				FileList files = executeWithRetry(options, () -> request.execute());
-				result.addAll(files.getItems());
+				result.addAll(files.getFiles());
 				request.setPageToken(files.getNextPageToken());
 			} while (request.getPageToken() != null && request.getPageToken().length() > 0);
 			return result;
@@ -591,7 +619,7 @@ public class GoogleDriveAdapter {
 		try {
 			List<File> result = new ArrayList<File>();
 			Drive.Files.List request = drive.files().list();
-			request.setMaxResults(1000);
+			request.setPageSize(1000);
 			String query = "";
 			if (title.isPresent()) {
 				query += " title = '" + title.get() + "'";
@@ -601,7 +629,7 @@ public class GoogleDriveAdapter {
 			}
 			do {
 				FileList files = executeWithRetry(options, () -> request.execute());
-				result.addAll(files.getItems());
+				result.addAll(files.getFiles());
 				request.setPageToken(files.getNextPageToken());
 			} while (request.getPageToken() != null && request.getPageToken().length() > 0);
 			return result;

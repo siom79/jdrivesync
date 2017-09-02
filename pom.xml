@@ -5,19 +5,19 @@
 
     <artifactId>jdrivesync</artifactId>
     <groupId>jdrivesync</groupId>
-    <version>0.3.0</version>
+    <version>0.3.1-SNAPSHOT</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.http.version>1.20.0</project.http.version>
         <project.oauth.version>1.20.0</project.oauth.version>
-        <project.google-drive-service.version>v2-rev174-1.20.0</project.google-drive-service.version>
+        <project.google-drive-service.version>v3-rev80-1.22.0</project.google-drive-service.version>
         <powermock.version>1.6.2</powermock.version>
         <github.account>siom79</github.account>
         <github.project>jdrivesync</github.project>
     </properties>
 
-    <licenses>
+	<licenses>
         <license>
             <name>Apache License, Version 2.0</name>
             <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
@@ -44,7 +44,7 @@
             <artifactId>jackson-mapper-asl</artifactId>
             <version>1.9.4</version>
         </dependency>
-        <dependency>
+        <!-- <dependency>
             <groupId>com.google.http-client</groupId>
             <artifactId>google-http-client</artifactId>
             <version>${project.http.version}</version>
@@ -53,7 +53,7 @@
             <groupId>com.google.http-client</groupId>
             <artifactId>google-http-client-jackson2</artifactId>
             <version>${project.http.version}</version>
-        </dependency>
+        </dependency> -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
