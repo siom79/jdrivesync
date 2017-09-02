@@ -33,6 +33,14 @@
         </developer>
     </developers>
 
+	<contributors>
+		<contributor>
+			<name>Ravi Soni</name>
+			<email>rv.soni@hotmail.com</email>
+			<url>https://github.com/rvsoni</url>
+		</contributor>
+	</contributors>
+
     <dependencies>
         <dependency>
             <groupId>com.google.apis</groupId>
@@ -44,16 +52,6 @@
             <artifactId>jackson-mapper-asl</artifactId>
             <version>1.9.4</version>
         </dependency>
-        <!-- <dependency>
-            <groupId>com.google.http-client</groupId>
-            <artifactId>google-http-client</artifactId>
-            <version>${project.http.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.http-client</groupId>
-            <artifactId>google-http-client-jackson2</artifactId>
-            <version>${project.http.version}</version>
-        </dependency> -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
