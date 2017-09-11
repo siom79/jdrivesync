@@ -39,7 +39,7 @@ public class GoogleDriveAdapter {
 	private final Encryption encryption;
 
 	private final Map<String,Optional<String>> supportedGooglMimeType;
-	
+
 	public GoogleDriveAdapter(Credential credential, Options options, DriveFactory driveFactory) {
 		this.credential = credential;
 		this.options = options;
@@ -162,7 +162,7 @@ public class GoogleDriveAdapter {
 		}
 		return false;
 	}
-	
+
 	public boolean isGoogleAppsDocumentforExport(File file) {
 		String mimeType = file.getMimeType();
 		if (mimeType != null && supportedGooglMimeType.containsKey(mimeType)) {
@@ -181,7 +181,7 @@ public class GoogleDriveAdapter {
 
 	public InputStream downloadFile(SyncItem syncItem) {
 		Drive drive = driveFactory.getDrive(this.credential);
-		
+
 		try {
 			File remoteFile = syncItem.getRemoteFile().get();
 			GenericUrl genericUrl = null;
@@ -192,7 +192,7 @@ public class GoogleDriveAdapter {
 			}else{
 				genericUrl = drive.files().get(remoteFile.getId()).set("alt", "media").buildHttpRequestUrl();
 			}
-			
+
 			if (genericUrl != null) {
 				HttpRequest httpRequest = drive.getRequestFactory().buildGetRequest(genericUrl);
 				LOGGER.log(Level.FINE, "Downloading file " + remoteFile.getId() + ".");
@@ -516,7 +516,7 @@ public class GoogleDriveAdapter {
 	}
 
 	private HttpResponse executeSessionInitiationRequest(Drive drive, File remoteFile) throws IOException {
-		GenericUrl url = new GenericUrl("https://www.googleapis.com/upload/drive/v2/files?uploadType=resumable");
+		GenericUrl url = new GenericUrl("https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable");
 		JsonHttpContent metadataContent = new JsonHttpContent(drive.getJsonFactory(), remoteFile);
 		HttpRequest httpRequest = drive.getRequestFactory().buildPostRequest(url, metadataContent);
 		LOGGER.log(Level.FINE, "Executing session initiation request to URL " + url);
