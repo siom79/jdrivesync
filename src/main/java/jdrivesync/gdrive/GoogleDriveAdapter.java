@@ -237,14 +237,14 @@ public class GoogleDriveAdapter {
 			java.io.File localFile = syncItem.getLocalFile().get();
 			File remoteFile = syncItem.getRemoteFile().get();
 			BasicFileAttributes attr = Files.readAttributes(localFile.toPath(), BasicFileAttributes.class);
-			remoteFile.setModifiedTime(new DateTime(attr.lastModifiedTime().toMillis()));
 			if (isGoogleAppsDocument(remoteFile)) {
 				return;
 			}
 			LOGGER.log(Level.FINE, "Updating metadata of remote file " + remoteFile.getId() + " (" + syncItem.getPath() + ").");
 			if (!options.isDryRun()) {
-				Drive.Files.Update updateRequest = drive.files().update(remoteFile.getId(), remoteFile);
-				//updateRequest.setSetModifiedDate(true);
+				File newRemoteFile = new File();
+				newRemoteFile.setModifiedTime(new DateTime(attr.lastModifiedTime().toMillis()));
+				Drive.Files.Update updateRequest = drive.files().update(remoteFile.getId(), newRemoteFile).setFields("modifiedTime");
 				File updatedFile = executeWithRetry(options, () -> updateRequest.execute());
 				syncItem.setRemoteFile(Optional.of(updatedFile));
 			}
