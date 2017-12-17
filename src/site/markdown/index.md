@@ -2,7 +2,7 @@
 
 jdrivesync is a simple command line tool that synchronizes a local file system structure to your Google Drive (and back):
 
-    java -jar jdrivesync-0.4.1-jar-with-dependencies.jar -l "/home/siom79"
+    java -jar jdrivesync-0.4.2-jar-with-dependencies.jar -l "/home/siom79"
 
 ##Motivation##
 Having a backup of your documents and pictures at some remote site is valuable. Google Drive
