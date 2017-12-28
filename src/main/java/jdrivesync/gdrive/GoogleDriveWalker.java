@@ -77,7 +77,7 @@ public class GoogleDriveWalker implements Walker {
 					ReportFactory.getInstance(this.options).log(new ReportEntry(file.getTitle(), ReportEntry.Status.Skipped, ReportEntry.Action.Skipped_GoogleApps, ReportEntry.getDirection(options), msg));
 					continue;
 				}
-				if (googleDriveAdapter.fileNameValid(file)) {
+				if (!googleDriveAdapter.fileNameValid(file)) {
 					String msg = "Skipped file '" + file.getTitle() + "' because it has an invalid file name.";
 					ReportFactory.getInstance(this.options).log(new ReportEntry(file.getTitle(), ReportEntry.Status.Skipped, ReportEntry.Action.Skipped_Error, ReportEntry.getDirection(options), msg));
 					continue;

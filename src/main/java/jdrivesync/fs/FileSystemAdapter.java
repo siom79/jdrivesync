@@ -70,14 +70,28 @@ public class FileSystemAdapter {
 					@Override
 					public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 						LOGGER.log(Level.FINE, "Deleting file '" + file + "'.");
-						delete(file.toFile());
+						SyncAction syncAction = delete(file.toFile());
+						if (syncAction == SyncAction.Skipped) {
+							return FileVisitResult.SKIP_SUBTREE;
+						}
 						return FileVisitResult.CONTINUE;
 					}
 
 					@Override
 					public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
 						LOGGER.log(Level.FINE, "Deleting directory '" + dir + "'.");
-						delete(dir.toFile());
+						SyncAction syncAction = delete(dir.toFile());
+						if (syncAction == SyncAction.Skipped) {
+							return FileVisitResult.SKIP_SUBTREE;
+						}
+						return FileVisitResult.CONTINUE;
+					}
+
+					@Override
+					public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+						if (isTrashDir(dir.toFile())) {
+							return FileVisitResult.SKIP_SUBTREE;
+						}
 						return FileVisitResult.CONTINUE;
 					}
 				});
@@ -87,7 +101,7 @@ public class FileSystemAdapter {
 
 	public SyncAction delete(File file) {
 		SyncAction syncAction = SyncAction.Skipped;
-		if (TRASH.equals(file.getName()) && file.getParentFile() != null && file.getParentFile().equals(options.getLocalRootDir().get())) {
+		if (isTrashDir(file)) {
 			LOGGER.log(Level.FINE, "Not deleting file '" + file.getAbsolutePath() + "' because it is our trash bin.");
 		} else {
 			if (options.isNoDelete()) {
@@ -100,30 +114,36 @@ public class FileSystemAdapter {
 						if (deleted) {
 							syncAction = SyncAction.Successful;
 						} else {
-							syncAction = SyncAction.Error;
-						}
+ 						}
 					}
-				} else {
-					try {
-						if (!options.isDryRun()) {
-							Path trashDir = createTrashDir();
-							Path relativePath = options.getLocalRootDir().get().toPath().relativize(file.toPath());
-							Path target = Paths.get(trashDir.toString(), relativePath.toString());
-							Path targetParent = target.getParent();
-							if (targetParent != null) {
-								Files.createDirectories(targetParent);
-							}
+				} else try {
+					if (!options.isDryRun()) {
+						Path trashDir = createTrashDir();
+						Path relativePath = options.getLocalRootDir().get().toPath().relativize(file.toPath());
+						Path target = Paths.get(trashDir.toString(), relativePath.toString());
+						Path targetParent = target.getParent();
+						if (targetParent != null) {
+							Files.createDirectories(targetParent);
+						}
+						if (!Files.exists(target)) {
 							LOGGER.log(Level.FINE, "Moving file '" + file.getAbsolutePath() + "' to trash bin ('" + target + "').");
 							Files.move(file.toPath(), target);
-							syncAction = SyncAction.Successful;
+						} else {
+							LOGGER.log(Level.FINE, "File '" + file.getAbsolutePath() + "' does exist in trash bin. Deleting instead.");
+							Files.delete(file.toPath());
 						}
-					} catch (Exception e) {
-						LOGGER.log(Level.WARNING, "Could not move file to .trash directory: " + e.getMessage(), e);
+						syncAction = SyncAction.Successful;
 					}
+				} catch (Exception e) {
+					LOGGER.log(Level.WARNING, "Could not move file to .trash directory: " + e.getMessage(), e);
 				}
 			}
 		}
 		return syncAction;
+	}
+
+	private boolean isTrashDir(File file) {
+		return file.getName().endsWith(TRASH) && file.getParentFile() != null && file.getParentFile().equals(options.getLocalRootDir().get());
 	}
 
 	private Path createTrashDir() throws IOException {
