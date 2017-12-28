@@ -138,12 +138,12 @@ public class GoogleDriveAdapter {
 				return;
 			}
 			if (options.isDeleteFiles()) {
-				LOGGER.log(Level.FINE, "Deleting file " + id + ".");
+				LOGGER.log(Level.FINE, "Deleting file " + id + " (" + file.getName() +").");
 				if (!options.isDryRun()) {
 					executeWithRetry(options, () -> drive.files().delete(id).execute());
 				}
 			} else {
-				LOGGER.log(Level.FINE, "Trashing file " + id + ".");
+				LOGGER.log(Level.FINE, "Trashing file " + id + " (" + file.getName() +").");
 				if (!options.isDryRun()) {
 					executeWithRetry(options, () -> drive.files().update("{'trashed':true}", file).execute()); //trash(id).execute());
 				}
@@ -622,7 +622,7 @@ public class GoogleDriveAdapter {
 			request.setPageSize(1000);
 			String query = "";
 			if (title.isPresent()) {
-				query += " title = '" + title.get() + "'";
+				query += " name = '" + title.get() + "'";
 			}
 			if (query.length() > 0) {
 				request.setQ(query);
