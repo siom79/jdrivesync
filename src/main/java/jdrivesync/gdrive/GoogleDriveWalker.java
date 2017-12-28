@@ -70,7 +70,7 @@ public class GoogleDriveWalker implements Walker {
             File remoteFile = syncDirectory.getRemoteFile().get();
             List<File> remoteChildren = googleDriveAdapter.listChildren(remoteFile.getId());
             for (File file : remoteChildren) {
-                if (googleDriveAdapter.isGoogleAppsDocumentforExport(file) && googleDriveAdapter.fileNameValid(file)) {
+                if (googleDriveAdapter.fileNameValid(file)) {
 					String relativePath = toRelativePath(file, syncDirectory);
 					if (googleDriveAdapter.isDirectory(file)) {
 						if (!fileShouldBeIgnored(relativePath, true, file)) {

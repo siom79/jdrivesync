@@ -2,7 +2,7 @@
 
 jdrivesync is a simple command line tool that synchronizes a local file system structure to your Google Drive (and back):
 
-    java -jar jdrivesync-0.4.0-jar-with-dependencies.jar -l "/home/siom79"
+    java -jar jdrivesync-0.4.2-jar-with-dependencies.jar -l "/home/siom79"
 
 The website is located at [http://siom79.github.io/jdrivesync/](http://siom79.github.io/jdrivesync).
 
@@ -34,7 +34,7 @@ mvn install
 After successful compilation you can execute jdrivesync with this command:
 
 ```
-java -jar target/jdrivesync-0.3.0-jar-with-dependencies.jar
+java -jar target/jdrivesync-0.4.2-jar-with-dependencies.jar
 ```
 
 The deb package is created with the maven plugin [jdeb](https://github.com/tcurdt/jdeb) during the build and is located in the `target`
