@@ -5,7 +5,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.json.gson.GsonFactory;
 import jdrivesync.cli.Options;
 import jdrivesync.exception.JDriveSyncException;
 import jdrivesync.gdrive.oauth.OAuth2ClientCredentials;
@@ -64,7 +64,7 @@ public class CredentialStore {
             }
             properties.load(new FileReader(file));
             HttpTransport httpTransport = new NetHttpTransport();
-            JsonFactory jsonFactory = new JacksonFactory();
+            JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
             GoogleCredential credential = new GoogleCredential.Builder().setJsonFactory(jsonFactory)
                     .setTransport(httpTransport).setClientSecrets(OAuth2ClientCredentials.CLIENT_ID, OAuth2ClientCredentials.CLIENT_SECRET).build();
             credential.setAccessToken(properties.getProperty(PROP_ACCESS_TOKEN));
