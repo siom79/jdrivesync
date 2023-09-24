@@ -28,7 +28,7 @@ public class RetryOperation {
                 returnValue = retryCallback.execute();
                 successful = true;
             } catch (IOException e) {
-                LOGGER.log(Level.FINE, "Network operation failed for the " + numberOfAttempts + ". time.", e);
+                LOGGER.log(Level.WARNING, "Network operation failed for the " + numberOfAttempts + ". time.", e);
             }
 			if (!successful) {
 				try {
