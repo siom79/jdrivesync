@@ -9,7 +9,6 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.Drive.Files.Export;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
-//import com.google.api.services.drive.model.ParentReference;
 import jdrivesync.cli.Options;
 import jdrivesync.constants.Constants;
 import jdrivesync.encryption.Encryption;
@@ -219,9 +218,12 @@ public class GoogleDriveAdapter {
 			if (isGoogleAppsDocument(remoteFile)) {
 				return;
 			}
+			File uploadFile = new File();
+			uploadFile.setName(remoteFile.getName());
+			uploadFile.setDescription(remoteFile.getDescription());
 			LOGGER.log(Level.INFO, "Updating file " + remoteFile.getId() + " (" + syncItem.getPath() + ").");
 			if (!options.isDryRun()) {
-				Drive.Files.Update updateRequest = drive.files().update(remoteFile.getId(), remoteFile, new FileContent(determineMimeType(localFile), localFile));
+				Drive.Files.Update updateRequest = drive.files().update(remoteFile.getId(), uploadFile, new FileContent(determineMimeType(localFile), localFile));
 				//updateRequest.setModifiedDate(true);
 				File updatedFile = executeWithRetry(options, () -> updateRequest.execute());
 				syncItem.setRemoteFile(Optional.of(updatedFile));
