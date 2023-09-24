@@ -12,8 +12,6 @@ import jdrivesync.sync.Synchronization;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -52,16 +50,19 @@ public class App {
         Options options = parseCli(args);
         LoggerFactory.configure(options);
         sync(options);
-        printStatistics();
+        printStatistics(options);
     }
 
-    private void printStatistics() {
+    private void printStatistics(Options options) {
         Statistics statistics = Statistics.getInstance();
         LOGGER.log(Level.INFO, "Statistics:");
         LOGGER.log(Level.INFO, String.format("NEW:       %s %s", statistics.getCreated(), statistics.getCreated() != 1 ? "files" : "file"));
         LOGGER.log(Level.INFO, String.format("DELETED:   %s %s", statistics.getDeleted(), statistics.getDeleted() != 1 ? "files" : "file"));
         LOGGER.log(Level.INFO, String.format("UPDATED:   %s %s", statistics.getUpdated(), statistics.getUpdated() != 1 ? "files" : "file"));
         LOGGER.log(Level.INFO, String.format("UNCHANGED: %s %s", statistics.getUnchanged(), statistics.getUnchanged() != 1 ? "files" : "file"));
+		if (options.isDryRun()) {
+			LOGGER.log(Level.INFO, "Dry Run! No files have been transmitted/changed.");
+		}
     }
 
     public static void initLogging() {
