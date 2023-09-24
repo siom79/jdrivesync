@@ -61,4 +61,4 @@ files of the account.
 
 ### Continous Integration
 
-[Travis CI](https://travis-ci.org) build: ![Build Status](https://travis-ci.org/siom79/jdrivesync.svg)
+[Github Actions](https://github.com/siom79/jdrivesync/actions/workflows/ci.yml)
