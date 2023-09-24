@@ -21,8 +21,8 @@ Please format your code according to the `Java Conventions` as they are provided
 
 ### Build
 
-The sources are build using the [JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html) (>= 1.8)
-and [maven](https://maven.apache.org/) (>= 3.2).
+The sources are build using the [JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html) (>= 11)
+and [maven](https://maven.apache.org/) (>= 3.9).
 To build jdrivesync from scratch execute these commands:
 
 ```
@@ -34,7 +34,7 @@ mvn install
 After successful compilation you can execute jdrivesync with this command:
 
 ```
-java -jar target/jdrivesync-0.4.2-jar-with-dependencies.jar
+java -jar target/jdrivesync-0.4.3-jar-with-dependencies.jar
 ```
 
 The deb package is created with the maven plugin [jdeb](https://github.com/tcurdt/jdeb) during the build and is located in the `target`
@@ -62,3 +62,22 @@ files of the account.
 ### Continous Integration
 
 [Github Actions](https://github.com/siom79/jdrivesync/actions/workflows/ci.yml)
+
+### Release
+
+- Set the release version:
+	```
+	mvn versions:set -DnewVersion=<version>
+	mvn versions:commit
+	```
+- Create a git tag:
+	```
+	git tag v<version>
+	git push origin --tags
+	```
+- The release is automatically created by a Github Action
+- Set the next SNAPSHOT version:
+	```
+	mvn versions:set -DnewVersion=<version>-SNAPSHOT
+	mvn versions:commit
+	```

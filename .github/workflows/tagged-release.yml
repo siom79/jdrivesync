@@ -1,0 +1,32 @@
+name: Tagged release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    name: Java ${{ matrix.java }}
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [ 11 ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: zulu
+          java-version: ${{ matrix.java }}
+          cache: maven
+      - name: Build with Maven
+        run: mvn -B package
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false
+          files: |
+            target/jdrivesync-*-with-dependencies.jar
+            target/jdrivesync_*.deb
