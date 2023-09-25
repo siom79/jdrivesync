@@ -45,7 +45,7 @@ collection on Google Drive as archive as you can delete them locally after succe
 ### Reporting
 jdrivesync can create an HTML file that reports the actions taken in the last run.
 
-###No application-specific metadata###
+### No application-specific metadata
 jdrivesync just uses the last modification timestamp and/or the MD5 checksum to determine whether a file has changed.
 It does not utilize any application-specific metadata. Hence you can start working with an already existing backup that has been created by another client.
 
