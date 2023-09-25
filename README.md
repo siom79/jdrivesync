@@ -85,3 +85,16 @@ files of the account.
 	git add .
 	git commit -m "Version set <version>-SNAPSHOT"
 	```
+
+## Website
+
+- Checkout tag and run site plugin:
+```
+cd /tmp
+git clone --branch v<verion> https://github.com/siom79/jdrivesync.git
+cd jdrivesync
+mvn site:site
+mvn site:stage
+cp -r target/staging $SIOM79_GITHUB_IO_REPO
+
+```
