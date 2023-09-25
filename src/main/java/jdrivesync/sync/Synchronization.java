@@ -490,7 +490,7 @@ public class Synchronization {
 			private void performChecksumCheck(File file, SyncItem syncItem, com.google.api.services.drive.model.File remoteFile, boolean updateMetadata) {
 				String remoteFileMd5Checksum = remoteFile.getMd5Checksum();
 				String localFileMd5Checksum = computeMd5Checksum(file);
-				if (remoteFileMd5Checksum.equals(localFileMd5Checksum)) {
+				if (remoteFileMd5Checksum != null && remoteFileMd5Checksum.equals(localFileMd5Checksum)) {
 					syncItem.setLocalFile(Optional.of(file));
 					if (!updateMetadata) {
 						LOGGER.log(Level.FINE, "Not downloading file '" + syncItem.getPath() + "' because MD5 checksums are equal (local: " + localFileMd5Checksum + ", remote: " + remoteFileMd5Checksum + ").");
