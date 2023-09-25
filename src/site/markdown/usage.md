@@ -1,4 +1,4 @@
-#Usage#
+# Usage
 
 The following options can be passed on the command line:
 

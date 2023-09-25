@@ -1,6 +1,6 @@
-#Installation#
+# Installation
 
-##deb package##
+# deb package
 
 There is a debian package available. It can be installed using the following command:
 
