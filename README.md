@@ -69,6 +69,8 @@ files of the account.
 	```
 	mvn versions:set -DnewVersion=<version>
 	mvn versions:commit
+    git add .
+    git commit -m "Version set <version>"
 	```
 - Create a git tag:
 	```
