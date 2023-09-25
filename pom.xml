@@ -5,7 +5,7 @@
 
     <artifactId>jdrivesync</artifactId>
     <groupId>jdrivesync</groupId>
-    <version>0.5.0</version>
+    <version>0.5.1-SNAPSHOT</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

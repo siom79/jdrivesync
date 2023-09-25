@@ -82,4 +82,6 @@ files of the account.
 	```
 	mvn versions:set -DnewVersion=<version>-SNAPSHOT
 	mvn versions:commit
+	git add .
+	git commit -m "Version set <version>-SNAPSHOT"
 	```
